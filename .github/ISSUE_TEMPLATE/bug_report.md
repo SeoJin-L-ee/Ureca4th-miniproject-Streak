@@ -1,7 +1,7 @@
 ---
 name: Bug report
-about: 버그 수 이슈 템플릿
-title: 'Fix: '
+about: 버그 수정 이슈 템플릿
+title: 'FIX: '
 labels: bug
 assignees: ''
 
