@@ -34,8 +34,8 @@ public class Study extends BaseEntity {
     private Long id;
 
     @ManyToOne(fetch = FetchType.LAZY, optional = false)
-    @JoinColumn(name = "leader_id", nullable = false)
-    private Member leader;
+    @JoinColumn(name = "creater_id", nullable = false)
+    private Member creater;
 
     @Column(nullable = false, length = 100)
     private String title;

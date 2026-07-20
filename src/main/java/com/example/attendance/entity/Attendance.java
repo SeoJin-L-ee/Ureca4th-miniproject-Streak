@@ -2,7 +2,7 @@ package com.example.attendance.entity;
 
 import com.example.attendance.entity.enums.AttendanceStatus;
 import com.example.global.entity.BaseEntity;
-import com.example.participant.entity.Participant;
+import com.example.member.entity.Member;
 import com.example.session.entity.Session;
 
 import jakarta.persistence.Column;
@@ -31,8 +31,8 @@ import lombok.NoArgsConstructor;
     name = "attendances",
     uniqueConstraints = {
         @UniqueConstraint(
-            name = "uk_attendance_session_participant",
-            columnNames = {"session_id", "p_id"}
+            name = "uk_attendance_session_member",
+            columnNames = {"session_id", "member_id"}
         )
     }
 )
@@ -47,8 +47,8 @@ public class Attendance extends BaseEntity {
     private Session session;
 
     @ManyToOne(fetch = FetchType.LAZY, optional = false)
-    @JoinColumn(name = "p_id", nullable = false)
-    private Participant participant;
+    @JoinColumn(name = "member_id", nullable = false)
+    private Member member;
 
     @Enumerated(EnumType.STRING)
     @Column(nullable = false, length = 20)
