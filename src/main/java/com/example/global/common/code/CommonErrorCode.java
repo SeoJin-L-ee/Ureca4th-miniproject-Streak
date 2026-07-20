@@ -12,6 +12,7 @@ public enum CommonErrorCode implements BaseErrorCode{
     NOT_VALID_ERROR(HttpStatus.BAD_REQUEST, "COMMON400-1", "입력값이 유효하지 않습니다."),
 
     UNAUTHORIZED(HttpStatus.UNAUTHORIZED, "COMMON401", "인증이 필요합니다."),
+    LOGIN_FAILED(HttpStatus.UNAUTHORIZED, "MEMBER401_1", "이메일 또는 비밀번호가 일치하지 않습니다."),
 
     FORBIDDEN(HttpStatus.FORBIDDEN, "COMMON403", "권한이 없습니다."),
 

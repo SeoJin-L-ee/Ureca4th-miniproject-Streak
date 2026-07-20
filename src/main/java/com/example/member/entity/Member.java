@@ -1,6 +1,7 @@
 package com.example.member.entity;
 
 import com.example.global.entity.BaseEntity;
+import com.example.member.entity.enums.MemberRole;
 import com.example.member.entity.enums.MemberStatus;
 
 import jakarta.persistence.Column;
@@ -11,6 +12,7 @@ import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
 import jakarta.persistence.Table;
+import jakarta.persistence.UniqueConstraint;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Getter;
@@ -21,7 +23,15 @@ import lombok.NoArgsConstructor;
 @Builder
 @NoArgsConstructor
 @AllArgsConstructor
-@Table(name = "members")
+@Table(
+	name = "members",
+	uniqueConstraints = { 
+		@UniqueConstraint(
+			name = "uk_member_email",
+			columnNames = "email"
+	    )
+	}
+)
 public class Member extends BaseEntity {
 
     @Id
@@ -39,6 +49,10 @@ public class Member extends BaseEntity {
 
     @Column(length = 30)
     private String phone;
+    
+    @Enumerated(EnumType.STRING)
+    @Column(nullable = false, length = 20)
+    private MemberRole role;
 
     @Enumerated(EnumType.STRING)
     @Column(nullable = false, length = 20)
