@@ -2,7 +2,7 @@ package com.example.submission.entity;
 
 import com.example.assignment.entity.Assignment;
 import com.example.global.entity.BaseEntity;
-import com.example.participant.entity.Participant;
+import com.example.member.entity.Member;
 
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
@@ -28,8 +28,8 @@ import lombok.NoArgsConstructor;
     name = "submissions",
     uniqueConstraints = {
         @UniqueConstraint(
-            name = "uk_submission_assignment_participant",
-            columnNames = {"assignment_id", "p_id"}
+            name = "uk_submission_assignment_member",
+            columnNames = {"assignment_id", "member_id"}
         )
     }
 )
@@ -44,8 +44,8 @@ public class Submission extends BaseEntity {
     private Assignment assignment;
 
     @ManyToOne(fetch = FetchType.LAZY, optional = false)
-    @JoinColumn(name = "p_id", nullable = false)
-    private Participant participant;
+    @JoinColumn(name = "member_id", nullable = false)
+    private Member member;
 
     @Column(columnDefinition = "TEXT")
     private String content;
