@@ -28,7 +28,8 @@ public class Member extends BaseEntity {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    @Column(nullable = false, length = 255)
+    //이메일 중복 가입방지를 위한 unique추가
+    @Column(nullable = false, unique = true, length = 255)
     private String email;
 
     @Column(nullable = false, length = 255)
@@ -44,4 +45,20 @@ public class Member extends BaseEntity {
     @Column(nullable = false, length = 20)
     private MemberStatus status;
     
+    //회원가입에만 사용하는 생성 메서드.
+    //status를 항상 ACTIVE로 지정해 가입 직후 로그인 가능하게
+    public static Member create(
+            String email,
+            String encodedPassword,
+            String name,
+            String phone
+    ) {
+        return Member.builder()
+	                .email(email)
+	                .password(encodedPassword)
+	                .name(name)
+	                .phone(phone)
+	                .status(MemberStatus.ACTIVE)
+	                .build();
+    }
 }

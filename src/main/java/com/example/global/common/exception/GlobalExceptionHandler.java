@@ -4,6 +4,7 @@ import java.util.HashMap;
 import java.util.Map;
 
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.AuthenticationException;
 import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
@@ -62,5 +63,22 @@ public class GlobalExceptionHandler {
         return ResponseEntity
                 .status(baseErrorCode.getStatus())
                 .body(errorResponse);
+    }
+    
+    @ExceptionHandler(AuthenticationException.class)
+    public ResponseEntity<CustomResponse<Void>> handleAuthenticationException(
+            AuthenticationException ex
+    ) {
+        // 로그인 API에서 비밀번호가 틀렸거나 비활성 계정인 경우 401을 반환한다.
+        BaseErrorCode errorCode = CommonErrorCode.UNAUTHORIZED;
+
+        return ResponseEntity.status(errorCode.getStatus())
+                .body(CustomResponse.onFailure(errorCode));
+    }
+
+    @ExceptionHandler(IllegalArgumentException.class)
+    public ResponseEntity<CustomResponse<Void>> handleIllegalArgumentException(IllegalArgumentException ex) {
+        // 중복 이메일 같은 가입 요청 오류를 400으로 반환한다.
+        return ResponseEntity.badRequest().body(CustomResponse.onFailure(CommonErrorCode.BAD_REQUEST.getCode(), ex.getMessage()));
     }
 }
