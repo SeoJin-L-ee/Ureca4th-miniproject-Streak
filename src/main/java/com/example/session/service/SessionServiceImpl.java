@@ -21,6 +21,7 @@ import com.example.session.dto.request.UpdateSessionReqDto;
 import com.example.session.dto.response.SessionAssignmentResDto;
 import com.example.session.dto.response.SessionAttendanceResDto;
 import com.example.session.dto.response.SessionInfoResDto;
+import com.example.session.dto.response.SessionListResDto;
 import com.example.session.dto.response.SessionResDto;
 import com.example.session.entity.Session;
 import com.example.session.exception.code.SessionErrorCode;
@@ -141,5 +142,22 @@ public class SessionServiceImpl implements SessionService {
 	            .toList();
 		
 		return SessionConverter.toSessionInfoResDto(session, assignmentResDtos, attendances);
+	}
+
+
+	// 스터디 회차 목록 조회 
+	@Override
+	public List<SessionListResDto> listSession(long studyId, long memberId) {
+		
+		// 해당 Study 에 참여한 Member만 스터디 회차를 조회할 수 있도록 검증
+		if (!participantRepository.existsByStudyIdAndMemberId(studyId, memberId)) {
+			throw new GeneralException(CommonErrorCode.FORBIDDEN);
+		}
+		
+		List<Session> sessions = sessionRepository.findAllByStudyIdOrderBySessionNumberDesc(studyId);
+		
+		return sessions.stream()
+				.map(SessionConverter::toSessionListResDto)
+				.toList();
 	}
 }

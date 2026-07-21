@@ -4,6 +4,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 import java.time.LocalDateTime;
+import java.util.List;
 
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
@@ -26,6 +27,7 @@ import com.example.participant.repository.ParticipantRepository;
 import com.example.session.dto.request.CreateSessionReqDto;
 import com.example.session.dto.request.UpdateSessionReqDto;
 import com.example.session.dto.response.SessionInfoResDto;
+import com.example.session.dto.response.SessionListResDto;
 import com.example.session.dto.response.SessionResDto;
 import com.example.session.entity.Session;
 import com.example.session.repository.SessionRepository;
@@ -430,5 +432,63 @@ public class SessionServiceImplTest {
 	    // then
 	    assertThat(result.assignments()).hasSize(1);
 	    assertThat(result.assignments().get(0).isSubmitted()).isTrue();
+	}
+	
+	@Test
+	@Order(11)
+	@DisplayName("스터디 회차 목록 조회")
+	void session_list() {
+
+	    // given
+	    participantRepository.save(
+	        Participant.builder()
+	            .study(study)
+	            .member(member)
+	            .role(StudyRole.MEMBER)
+	            .build()
+	    );
+
+	    sessionRepository.save(
+	        Session.builder()
+	            .study(study)
+	            .title("1회차")
+	            .content("1회차 내용")
+	            .sessionNumber(1)
+	            .startsAt(LocalDateTime.now())
+	            .build()
+	    );
+
+	    sessionRepository.save(
+	        Session.builder()
+	            .study(study)
+	            .title("2회차")
+	            .content("2회차 내용")
+	            .sessionNumber(2)
+	            .startsAt(LocalDateTime.now().plusDays(1))
+	            .build()
+	    );
+
+
+	    // when
+	    List<SessionListResDto> result = sessionService.listSession(study.getId(), member.getId());
+
+
+	    // then
+	    assertThat(result).hasSize(2);
+
+	    // Desc 정렬 검증
+	    assertThat(result.get(0).sessionNumber())
+	            .isEqualTo(2);
+
+	    assertThat(result.get(1).sessionNumber())
+	            .isEqualTo(1);
+
+
+	    // 데이터 매핑 검증
+	    assertThat(result.get(0).title())
+	            .isEqualTo("2회차");
+
+	    assertThat(result.get(1).title())
+	            .isEqualTo("1회차");
 	}
 }	
