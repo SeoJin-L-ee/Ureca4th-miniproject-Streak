@@ -49,7 +49,7 @@ public class StudyController {
 		return CustomResponse.onSuccess(resDto);
 	}
 	
-	@PatchMapping("/{studyId}")
+	@PatchMapping("/{studyId}/status")
 	// 스터디 상태 변경 (모집 중, 모집 완료, 종료됨)
 	public CustomResponse<StudyInfoResDto> updateStudyStatus(
 			@CurrentUser MemberPrincipal principal,
