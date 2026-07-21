@@ -1,17 +1,8 @@
 package com.example.auth.dto.response;
 
 import com.example.member.entity.Member;
-import lombok.AllArgsConstructor;
-import lombok.Getter;
 
-@Getter
-@AllArgsConstructor
-public class MemberResponse {
-
-    private Long memberId;
-    private String email;
-    private String name;
-    private String phone;
+public record MemberResponse(Long memberId, String email, String name, String phone) {
 
     public static MemberResponse from(Member member) {
         return new MemberResponse(
