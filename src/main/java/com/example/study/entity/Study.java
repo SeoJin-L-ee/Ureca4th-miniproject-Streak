@@ -1,7 +1,9 @@
 package com.example.study.entity;
 
+import java.util.Objects;
+
 import com.example.global.entity.BaseEntity;
-import com.example.member.entity.Member;
+import com.example.study.dto.request.UpdateStudyReqDto;
 import com.example.study.entity.enums.StudyCategory;
 import com.example.study.entity.enums.StudyStatus;
 
@@ -9,12 +11,9 @@ import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.EnumType;
 import jakarta.persistence.Enumerated;
-import jakarta.persistence.FetchType;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
-import jakarta.persistence.JoinColumn;
-import jakarta.persistence.ManyToOne;
 import jakarta.persistence.Table;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
@@ -33,10 +32,6 @@ public class Study extends BaseEntity {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    @ManyToOne(fetch = FetchType.LAZY, optional = false)
-    @JoinColumn(name = "creater_id", nullable = false)
-    private Member creater;
-
     @Column(nullable = false, length = 100)
     private String title;
 
@@ -53,5 +48,23 @@ public class Study extends BaseEntity {
     @Enumerated(EnumType.STRING)
     @Column(nullable = false, length = 30)
     private StudyStatus status;
+    
+    @Builder.Default
+    @Column(nullable = false)
+    private boolean isDeleted = false;
 
+    public void updateStudy(UpdateStudyReqDto reqDto) {
+    	this.title = Objects.requireNonNullElse(reqDto.title(), this.title);
+        this.description = Objects.requireNonNullElse(reqDto.description(), this.description);
+        this.capacity = Objects.requireNonNullElse(reqDto.capacity(), this.capacity);
+        this.category = Objects.requireNonNullElse(reqDto.category(), this.category);
+    }
+    
+    public void updateStatus(StudyStatus status) {
+    	this.status = status;
+    }
+    
+    public void updateIsDeleted(boolean isDeleted) {
+    	this.isDeleted = isDeleted;
+    }
 }
