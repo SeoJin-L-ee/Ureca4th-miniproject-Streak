@@ -22,6 +22,7 @@ import com.example.auth.dto.response.CsrfResponse;
 import com.example.auth.dto.response.MemberResponse;
 import com.example.auth.service.AuthService;
 import com.example.global.common.CustomResponse;
+import com.example.global.security.CurrentUser;
 import com.example.global.security.MemberPrincipal;
 
 import jakarta.servlet.http.HttpServletRequest;
@@ -72,10 +73,8 @@ public class AuthController {
     }
 
     @GetMapping("/me")
-    public CustomResponse<MemberResponse> me(Authentication authentication) {
+    public CustomResponse<MemberResponse> me(@CurrentUser MemberPrincipal principal) {
         //인증되지 않은 사용자는 SecurityConfig에서 401 처리
-        MemberPrincipal principal = (MemberPrincipal) authentication.getPrincipal();
-
         return CustomResponse.onSuccess(new MemberResponse(principal.getMemberId(), principal.getEmail(), principal.getName(), principal.getPhone()));
     }
 
