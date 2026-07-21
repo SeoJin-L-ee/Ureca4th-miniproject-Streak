@@ -16,10 +16,12 @@ import org.springframework.boot.webmvc.test.autoconfigure.WebMvcTest;
 import org.springframework.context.annotation.Import;
 import org.springframework.http.MediaType;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
+import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.MvcResult;
 
+import com.example.auth.dto.request.LoginRequest;
 import com.example.auth.dto.request.SignUpRequest;
 import com.example.auth.dto.response.MemberResponse;
 import com.example.auth.service.AuthService;
@@ -42,6 +44,9 @@ public class AuthControllerSecurityTest {
 	
 	@Autowired
 	ObjectMapper objectMapper;
+	
+	@Autowired
+	PasswordEncoder passwordEncoder;
 	
 	@MockitoBean
     AuthService authService;
@@ -102,5 +107,48 @@ public class AuthControllerSecurityTest {
         MvcResult result = mockMvc.perform(get("/api/auth/me").with(authentication(new UsernamePasswordAuthenticationToken(principal, null, principal.getAuthorities()))))
         														.andExpect(status().isOk()).andExpect(jsonPath("$.result.email").value("test@test.com")).andReturn();
         logResult("GET /api/auth/me (인증됨)", result);
+    }
+    
+    @Test
+    @DisplayName("login은 올바른 이메일/비밀번호면 200과 세션을 발급한다")
+    void loginSuccess() throws Exception {
+        Member member = Member.builder().id(1L).email("test@test.com").password(passwordEncoder.encode("abcd1234")).name("길동이").phone("010-1234-5678").status(MemberStatus.ACTIVE).build();
+        given(memberUserDetailsService.loadUserByUsername("test@test.com")).willReturn(MemberPrincipal.from(member));
+
+        LoginRequest request = new LoginRequest("test@test.com", "abcd1234");
+
+        MvcResult result = mockMvc.perform(post("/api/auth/login").with(csrf()).contentType(MediaType.APPLICATION_JSON)
+        															.content(objectMapper.writeValueAsBytes(request)))
+        															.andExpect(status().isOk())
+        															.andExpect(jsonPath("$.result.email").value("test@test.com"))
+        															.andReturn();
+        logResult("POST /api/auth/login (성공)", result);
+    }
+
+    @Test
+    @DisplayName("login은 비밀번호가 틀리면 401을 반환한다")
+    void loginWrongPassword401() throws Exception {
+        Member member = Member.builder().id(1L).email("test@test.com").password(passwordEncoder.encode("abcd1234")).name("길동이").status(MemberStatus.ACTIVE).build();
+        
+        given(memberUserDetailsService.loadUserByUsername("test@test.com")).willReturn(MemberPrincipal.from(member));
+
+        LoginRequest request = new LoginRequest("test@test.com", "wrongpass");
+
+        MvcResult result = mockMvc.perform(post("/api/auth/login").with(csrf()).contentType(MediaType.APPLICATION_JSON)
+        															.content(objectMapper.writeValueAsBytes(request)))
+        															.andExpect(status().isUnauthorized())
+        															.andReturn();
+        logResult("POST /api/auth/login (틀린 비밀번호)", result);
+    }
+
+    @Test
+    @DisplayName("logout은 인증된 사용자의 요청이면 204를 반환한다")
+    void logoutSuccess() throws Exception {
+        MemberPrincipal principal = principal();
+
+        MvcResult result = mockMvc.perform(post("/api/auth/logout").with(csrf())
+        							.with(authentication(new UsernamePasswordAuthenticationToken(principal, null, principal.getAuthorities()))))
+        																		.andExpect(status().isNoContent()).andReturn();
+        logResult("POST /api/auth/logout", result);
     }
 }
