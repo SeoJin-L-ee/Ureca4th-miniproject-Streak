@@ -15,5 +15,11 @@ public record SessionInfoResDto(
 	List<SessionAssignmentResDto> assignments,
 	
 	// 해당 회차 출석 정보 
-	List<SessionAttendanceResDto> attendances
+	List<SessionAttendanceResDto> attendances,
+	
+	// 평균 출석률 
+	int attendanceRate,
+	
+	// 평균 제출률 
+	int assignmentRate
 ) {}

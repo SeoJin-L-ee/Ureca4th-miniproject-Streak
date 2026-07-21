@@ -17,6 +17,9 @@ import org.springframework.boot.test.context.SpringBootTest;
 
 import com.example.assignment.entity.Assignment;
 import com.example.assignment.repository.AssignmentRepository;
+import com.example.attendance.entity.Attendance;
+import com.example.attendance.entity.enums.AttendanceStatus;
+import com.example.attendance.repository.AttendanceRepository;
 import com.example.global.common.exception.GeneralException;
 import com.example.member.entity.Member;
 import com.example.member.entity.enums.MemberStatus;
@@ -63,6 +66,9 @@ public class SessionServiceImplTest {
 	
 	@Autowired
 	private SubmissionRepository submissionRepository;
+	
+	@Autowired
+	private AttendanceRepository attendanceRepository;
 	
 	@Autowired
 	private SessionServiceImpl sessionService;
@@ -490,5 +496,94 @@ public class SessionServiceImplTest {
 
 	    assertThat(result.get(1).title())
 	            .isEqualTo("1회차");
+	}
+	
+	@Test
+	@Order(12)
+	@DisplayName("스터디 회차 상세 조회 - 출석률 및 과제 제출률 계산 검증")
+	void detail_session_with_rates() {
+
+	    // given
+	    participantRepository.save(
+	        Participant.builder()
+	            .study(study)
+	            .member(member)
+	            .role(StudyRole.MEMBER)
+	            .build()
+	    );
+
+	    Session session = sessionRepository.save(
+	        Session.builder()
+	            .study(study)
+	            .title("1회차 세션")
+	            .sessionNumber(1)
+	            .startsAt(LocalDateTime.now())
+	            .build()
+	    );
+
+	    // 출석 데이터 2개 생성 (1개 PRESENT, 1개 ABSENT -> 출석률 50%)
+	    attendanceRepository.save(
+	        Attendance.builder()
+	            .session(session)
+	            .member(member)
+	            .status(AttendanceStatus.PRESENT)
+	            .build()
+	    );
+	    
+	    // 다른 회원의 결석 데이터
+	    Member otherMember = memberRepository.save(
+	        Member.builder()
+	            .email("other@example.com")
+	            .name("다른참여")
+	            .password("password123!")
+	            .phone("010-9999-8888")
+	            .status(MemberStatus.ACTIVE)
+	            .build()
+	    );
+	    
+	    attendanceRepository.save(
+	        Attendance.builder()
+	            .session(session)
+	            .member(otherMember)
+	            .status(AttendanceStatus.ABSENT)
+	            .build()
+	    );
+
+	    // 과제 2개 생성 및 1개만 제출 (제출률 50%)
+	    Assignment assignment1 = assignmentRepository.save(
+	        Assignment.builder()
+	            .session(session)
+	            .title("과제1")
+	            .description("과제1 설명")
+	            .dueAt(LocalDateTime.now().plusDays(1))
+	            .build()
+	    );
+
+	    assignmentRepository.save(
+	        Assignment.builder()
+	            .session(session)
+	            .title("과제2")
+	            .description("과제2 설명")
+	            .dueAt(LocalDateTime.now().plusDays(1))
+	            .build()
+	    );
+
+	    // 과제1만 제출
+	    submissionRepository.save(
+	        Submission.builder()
+	            .assignment(assignment1)
+	            .member(member)
+	            .build()
+	    );
+
+	    // when
+	    SessionInfoResDto result = sessionService.detailSession(study.getId(), session.getId(), member.getId());
+
+	    // then
+	    // 출석률 50% (2명 중 1명 출석)
+	    assertThat(result.attendanceRate()).isEqualTo(50);
+	    
+	    // 과제 제출률 50% (2개 과제 중 1개 제출)
+	    assertThat(result.assignmentRate()).isEqualTo(50);
 	}
 }	

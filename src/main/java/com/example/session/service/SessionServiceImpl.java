@@ -8,6 +8,7 @@ import org.springframework.stereotype.Service;
 
 import com.example.assignment.entity.Assignment;
 import com.example.assignment.repository.AssignmentRepository;
+import com.example.attendance.entity.enums.AttendanceStatus;
 import com.example.attendance.repository.AttendanceRepository;
 import com.example.global.common.code.CommonErrorCode;
 import com.example.global.common.exception.GeneralException;
@@ -141,7 +142,28 @@ public class SessionServiceImpl implements SessionService {
 	            .map(SessionAttendanceConverter::toSessionAttendanceResDto) 
 	            .toList();
 		
-		return SessionConverter.toSessionInfoResDto(session, assignmentResDtos, attendances);
+	    
+	    // 평균 출석율 구하기 
+	    int attendanceRate = 0;
+	    if(!attendances.isEmpty()) {
+	    	long presentCount = attendances.stream()
+	    			.filter(a -> a.status() == AttendanceStatus.PRESENT)
+	    			.count();
+	    	
+	    	attendanceRate = (int) Math.round((double)presentCount / attendances.size() * 100);
+	    }
+	    
+	    // 과제 목록 및 제출률 계산  
+	    int assignmentRate = 0;
+	    if(!assignmentResDtos.isEmpty()) {
+	    	long submittedCount = assignmentResDtos.stream()
+	    			.filter(SessionAssignmentResDto::isSubmitted)
+	    			.count();
+	    	
+	    	assignmentRate = (int) Math.round((double) submittedCount / assignments.size() * 100);
+	    }
+	    
+		return SessionConverter.toSessionInfoResDto(session, assignmentResDtos, attendances, attendanceRate, assignmentRate);
 	}
 
 

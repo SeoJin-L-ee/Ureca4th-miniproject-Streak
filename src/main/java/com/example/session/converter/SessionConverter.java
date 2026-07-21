@@ -41,7 +41,9 @@ public class SessionConverter {
 	public static SessionInfoResDto toSessionInfoResDto(
 			Session session,
 			List<SessionAssignmentResDto> assignments,
-            List<SessionAttendanceResDto> attendances
+            List<SessionAttendanceResDto> attendances,
+            int attendanceRate, 
+            int assignmentRate
 	) {
 		return new SessionInfoResDto(
 				session.getId(),
@@ -50,7 +52,9 @@ public class SessionConverter {
 				session.getContent(),
 				session.getStartsAt(),
 				assignments,
-				attendances
+				attendances,
+				attendanceRate,
+				assignmentRate
 		);
 				
 	}
