@@ -2,16 +2,14 @@ package com.example.session.service;
 
 import org.springframework.stereotype.Service;
 
-import com.example.global.common.CustomResponse;
+import com.example.global.common.code.CommonErrorCode;
 import com.example.global.common.exception.GeneralException;
-import com.example.participant.entity.Participant;
 import com.example.participant.entity.enums.StudyRole;
-import com.example.participant.exception.code.ParticipantErrorCode;
 import com.example.participant.repository.ParticipantRepository;
 import com.example.session.converter.SessionConverter;
 import com.example.session.dto.request.CreateSessionReqDto;
 import com.example.session.dto.request.UpdateSessionReqDto;
-import com.example.session.dto.response.SessionDetailResDto;
+import com.example.session.dto.response.SessionResDto;
 import com.example.session.entity.Session;
 import com.example.session.exception.code.SessionErrorCode;
 import com.example.session.repository.SessionRepository;
@@ -29,31 +27,33 @@ public class SessionServiceImpl implements SessionService {
 	private final StudyRepository studyRepository;
 	private final ParticipantRepository participantRepository;
 	
-	// 회차 생성 
+	
+	// 스터디 회차 생성 
 	@Override
-	public CustomResponse<SessionDetailResDto> createSession(long studyId, long memberId, CreateSessionReqDto reqDto) {
+	public SessionResDto createSession(long studyId, long memberId, CreateSessionReqDto reqDto) {
 		Study study = studyRepository.findById(studyId)
 				.orElseThrow(() -> new GeneralException(StudyErrorCode.STUDY_NOT_FOUND));
 		
-		
-		Participant participant = participantRepository.findByStudyIdAndMemberId(studyId, memberId)
-				.orElseThrow(()-> new GeneralException(ParticipantErrorCode.PARTICIPANT_NOT_FOUND));
-		
-		if(participant.getRole() != StudyRole.LEADER) {
-			throw new GeneralException(ParticipantErrorCode.PARTICIPANT_NOT_AUTHORIZED);
+		// LEADER 로 등록된 Member만 스터디 회차를 생성할 수 있도록 검증 
+		if(!participantRepository.existsByStudyIdAndMemberIdAndRole(studyId, memberId, StudyRole.LEADER)) {
+			throw new GeneralException(CommonErrorCode.FORBIDDEN);
 		}
 			
 		Session session = SessionConverter.toSession(reqDto, study);
 		Session savedSession = sessionRepository.save(session);
 		
-		return CustomResponse.onSuccess(SessionConverter.toDetailResDto(savedSession));
+		return SessionConverter.toDetailResDto(savedSession);
 	}
 
-	// 회차 수정 
+	
+	// 스터디 회차 수정 
 	@Override
-	public CustomResponse<SessionDetailResDto> updateSession(long studyId, long sessionId, long memberId, UpdateSessionReqDto reqDto) {
+	public SessionResDto updateSession(long studyId, long sessionId, long memberId, UpdateSessionReqDto reqDto) {
 		
-		validateLeader(studyId, memberId);
+		// LEADER 로 등록된 Member만 스터디 회차를 생성할 수 있도록 검증 
+		if(!participantRepository.existsByStudyIdAndMemberIdAndRole(studyId, memberId, StudyRole.LEADER)) {
+			throw new GeneralException(CommonErrorCode.FORBIDDEN);
+		}
 		
 		Session session = sessionRepository.findById(sessionId)
 				.orElseThrow(() -> new GeneralException(SessionErrorCode.SESSION_NOT_FOUND));
@@ -64,24 +64,9 @@ public class SessionServiceImpl implements SessionService {
 			}
 		}
 		
-		session.update(
-	            reqDto.sessionNumber(),
-	            reqDto.title(),
-	            reqDto.content(),
-	            reqDto.startsAt()
-	    );
+		session.updateSession(reqDto);
 		
-		return CustomResponse.onSuccess(SessionConverter.toDetailResDto(session));
+		return SessionConverter.toDetailResDto(session);
 	}
 	
-	
-	// 리더 권한 검증 
-	private void validateLeader(long studyId, long memberId) {
-		Participant participant = participantRepository.findByStudyIdAndMemberId(studyId, memberId)
-				.orElseThrow(()-> new GeneralException(ParticipantErrorCode.PARTICIPANT_NOT_FOUND));
-		
-		if(participant.getRole() != StudyRole.LEADER) {
-			throw new GeneralException(ParticipantErrorCode.PARTICIPANT_NOT_AUTHORIZED);
-		}
-	}
 }

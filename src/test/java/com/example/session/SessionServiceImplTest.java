@@ -14,7 +14,6 @@ import org.junit.jupiter.api.TestMethodOrder;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 
-import com.example.global.common.CustomResponse;
 import com.example.member.entity.Member;
 import com.example.member.entity.enums.MemberStatus;
 import com.example.member.repository.MemberRepository;
@@ -23,7 +22,7 @@ import com.example.participant.entity.enums.StudyRole;
 import com.example.participant.repository.ParticipantRepository;
 import com.example.session.dto.request.CreateSessionReqDto;
 import com.example.session.dto.request.UpdateSessionReqDto;
-import com.example.session.dto.response.SessionDetailResDto;
+import com.example.session.dto.response.SessionResDto;
 import com.example.session.entity.Session;
 import com.example.session.repository.SessionRepository;
 import com.example.session.service.SessionServiceImpl;
@@ -113,11 +112,15 @@ public class SessionServiceImplTest {
         );
 		
 		// when 
-		CustomResponse<SessionDetailResDto> response = sessionService.createSession(study.getId(), member.getId(), createReqDto);
+		SessionResDto response = sessionService.createSession(study.getId(), member.getId(), createReqDto);
+		
 		
 		// then 
-	    assertThat(response.getResult().title()).isEqualTo("테스트 세션1");
+		// 응답 DTO 의 필드를 직접 검증 
+	    assertThat(response.title()).isEqualTo("테스트 세션1");
+	    assertThat(response.sessionNumber()).isEqualTo(1);
 		
+	    // DB 저장 상태 검증 
 	    Session session = sessionRepository.findAll().get(0);
 
 	    assertThat(session.getTitle()).isEqualTo("테스트 세션1");
@@ -169,11 +172,13 @@ public class SessionServiceImplTest {
 		);
 		
 		// when 
-		CustomResponse<SessionDetailResDto> response = sessionService.updateSession(study.getId(), session.getId(), member.getId(), updateReqDto);
+		SessionResDto response = sessionService.updateSession(study.getId(), session.getId(), member.getId(), updateReqDto);
 		
 		// then
-		assertThat(response.getResult().title()).isEqualTo("테스트 세션 수정1");
+		// 응답 DTO 의 필드를 직접 검증 
+		assertThat(response.title()).isEqualTo("테스트 세션 수정1");
 		
+		// 응답 DTO 의 필드를 직접 검증 
 	    Session saved = sessionRepository.findAll().get(0);
 
 	    assertThat(saved.getTitle()).isEqualTo("테스트 세션 수정1");

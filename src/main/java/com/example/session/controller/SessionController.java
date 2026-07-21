@@ -1,5 +1,6 @@
 package com.example.session.controller;
 
+import org.springframework.http.HttpStatus;
 import org.springframework.web.bind.annotation.PatchMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -12,7 +13,7 @@ import com.example.global.security.CurrentUser;
 import com.example.global.security.MemberPrincipal;
 import com.example.session.dto.request.CreateSessionReqDto;
 import com.example.session.dto.request.UpdateSessionReqDto;
-import com.example.session.dto.response.SessionDetailResDto;
+import com.example.session.dto.response.SessionResDto;
 import com.example.session.service.SessionService;
 
 import lombok.RequiredArgsConstructor;
@@ -26,22 +27,24 @@ public class SessionController {
 	
 	// 스터디 회차 생성 
 	@PostMapping("/studies/{studyId}/sessions")
-	public CustomResponse<SessionDetailResDto> insertSession(
+	public CustomResponse<SessionResDto> insertSession(
 			@PathVariable("studyId") Long studyId, 
 			@CurrentUser MemberPrincipal principal,
 			@RequestBody CreateSessionReqDto reqDto
 	){
-		return sessionService.createSession(studyId, principal.getMemberId(), reqDto);
+		SessionResDto resDto = sessionService.createSession(studyId, principal.getMemberId(), reqDto);
+		return CustomResponse.onSuccess(HttpStatus.CREATED, resDto);
 	}
 	
 	// 스터디 회차 수정 
 	@PatchMapping("/studies/{studyId}/sessions/{sessionId}")
-	public CustomResponse<SessionDetailResDto> updateSession(
+	public CustomResponse<SessionResDto> updateSession(
 			@PathVariable("studyId") Long studyId, 
 			@PathVariable("sessionId") Long sessionId,
 			@CurrentUser MemberPrincipal principal,
 			@RequestBody UpdateSessionReqDto reqDto
 	){
-		return sessionService.updateSession(studyId, sessionId, principal.getMemberId(), reqDto); 
+		SessionResDto resDto = sessionService.updateSession(studyId, sessionId, principal.getMemberId(), reqDto); 
+		return CustomResponse.onSuccess(resDto);
 	}
 }

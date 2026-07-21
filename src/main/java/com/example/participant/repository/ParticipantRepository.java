@@ -1,12 +1,11 @@
 package com.example.participant.repository;
 
-import java.util.Optional;
-
 import org.springframework.data.jpa.repository.JpaRepository;
 
 import com.example.participant.entity.Participant;
+import com.example.participant.entity.enums.StudyRole;
 
 public interface ParticipantRepository extends JpaRepository<Participant, Long> {
 
-	Optional<Participant> findByStudyIdAndMemberId(Long studyId, Long memberId);
+	boolean existsByStudyIdAndMemberIdAndRole(Long studyId, Long memberId, StudyRole studyRole);
 }

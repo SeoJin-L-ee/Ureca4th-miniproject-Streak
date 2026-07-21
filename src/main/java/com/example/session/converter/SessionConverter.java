@@ -1,7 +1,7 @@
 package com.example.session.converter;
 
 import com.example.session.dto.request.CreateSessionReqDto;
-import com.example.session.dto.response.SessionDetailResDto;
+import com.example.session.dto.response.SessionResDto;
 import com.example.session.entity.Session;
 import com.example.study.entity.Study;
 
@@ -20,8 +20,8 @@ public class SessionConverter {
 	
 	
 	// Session -> SessionDetailResDto
-	public static SessionDetailResDto toDetailResDto(Session session) {
-		return new SessionDetailResDto(
+	public static SessionResDto toDetailResDto(Session session) {
+		return new SessionResDto(
 				session.getId(),
 				session.getSessionNumber(),
 				session.getTitle(),
