@@ -14,6 +14,9 @@ import org.junit.jupiter.api.TestMethodOrder;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 
+import com.example.assignment.entity.Assignment;
+import com.example.assignment.repository.AssignmentRepository;
+import com.example.global.common.exception.GeneralException;
 import com.example.member.entity.Member;
 import com.example.member.entity.enums.MemberStatus;
 import com.example.member.repository.MemberRepository;
@@ -22,6 +25,7 @@ import com.example.participant.entity.enums.StudyRole;
 import com.example.participant.repository.ParticipantRepository;
 import com.example.session.dto.request.CreateSessionReqDto;
 import com.example.session.dto.request.UpdateSessionReqDto;
+import com.example.session.dto.response.SessionInfoResDto;
 import com.example.session.dto.response.SessionResDto;
 import com.example.session.entity.Session;
 import com.example.session.repository.SessionRepository;
@@ -30,6 +34,8 @@ import com.example.study.entity.Study;
 import com.example.study.entity.enums.StudyCategory;
 import com.example.study.entity.enums.StudyStatus;
 import com.example.study.repository.StudyRepository;
+import com.example.submission.entity.Submission;
+import com.example.submission.repository.SubmissionRepository;
 
 import jakarta.transaction.Transactional;
 
@@ -49,6 +55,12 @@ public class SessionServiceImplTest {
 	
 	@Autowired
 	private StudyRepository studyRepository;
+	
+	@Autowired
+	private AssignmentRepository assignmentRepository;
+	
+	@Autowired
+	private SubmissionRepository submissionRepository;
 	
 	@Autowired
 	private SessionServiceImpl sessionService;
@@ -277,5 +289,146 @@ public class SessionServiceImplTest {
 	        sessionService.deleteSession(study.getId(), session.getId(), member.getId())
 	    )
 	    .isInstanceOf(RuntimeException.class);
+	}
+	
+	@Test 
+	@Order(7)
+	@DisplayName("스터디 회차 상세 조회 성공")
+	void detail_session_success() {
+
+	    // given
+	    participantRepository.save(
+	        Participant.builder()
+	            .study(study)
+	            .member(member)
+	            .role(StudyRole.MEMBER)
+	            .build()
+	    );
+
+	    Session session = sessionRepository.save(
+	        Session.builder()
+	            .study(study)
+	            .title("1회차")
+	            .content("내용")
+	            .sessionNumber(1)
+	            .startsAt(LocalDateTime.now())
+	            .build()
+	    );
+
+	    // when
+	    SessionInfoResDto result = sessionService.detailSession(study.getId(), session.getId(), member.getId());
+
+	    // then
+	    assertThat(result.title()).isEqualTo("1회차");
+	    assertThat(result.sessionNumber()).isEqualTo(1);
+	}
+	
+	@Test
+	@Order(8)
+	@DisplayName("스터디 회차 상세 조회 실패 - 참여하지 않은 유저")
+	void detail_session_not_participant() {
+
+	    Session session = sessionRepository.save(
+	        Session.builder()
+	            .study(study)
+	            .title("1회차")
+	            .content("내용")
+	            .sessionNumber(1)
+	            .startsAt(LocalDateTime.now())
+	            .build()
+	    );
+
+	    assertThatThrownBy(() ->
+	        sessionService.detailSession(study.getId(), session.getId(), member.getId())
+	    )
+	    .isInstanceOf(GeneralException.class);
+	}
+	
+	@Test
+	@Order(9)
+	@DisplayName("스터디 회차 상세 조회 실패 - 잘못된 studyId")
+	void detail_session_invalid_study() {
+
+	    // 다른 스터디 생성
+	    Study anotherStudy = studyRepository.save(
+	        Study.builder()
+	            .creater(member)
+	            .title("다른 스터디")
+	            .description("설명")
+	            .capacity(5)
+	            .category(StudyCategory.ALGORITHM)
+	            .status(StudyStatus.RECRUITING)
+	            .build()
+	    );
+
+	    participantRepository.save(
+	        Participant.builder()
+	            .study(study)
+	            .member(member)
+	            .role(StudyRole.MEMBER)
+	            .build()
+	    );
+
+	    Session session = sessionRepository.save(
+	        Session.builder()
+	            .study(study)
+	            .title("1회차")
+	            .sessionNumber(1)
+	            .startsAt(LocalDateTime.now())
+	            .build()
+	    );
+
+	    assertThatThrownBy(() ->
+	        sessionService.detailSession(anotherStudy.getId(), session.getId(), member.getId())
+	    )
+	    .isInstanceOf(GeneralException.class);
+	}
+	
+	@Test
+	@Order(10)
+	@DisplayName("스터디 회차 상세 조회 - 과제 제출 여부 포함")
+	void detail_session_with_assignment_submission() {
+
+	    // given
+	    participantRepository.save(
+	        Participant.builder()
+	            .study(study)
+	            .member(member)
+	            .role(StudyRole.MEMBER)
+	            .build()
+	    );
+
+	    Session session = sessionRepository.save(
+	        Session.builder()
+	            .study(study)
+	            .title("1회차")
+	            .sessionNumber(1)
+	            .startsAt(LocalDateTime.now())
+	            .build()
+	    );
+
+	    Assignment assignment = assignmentRepository.save( 
+	        Assignment.builder()
+	            .session(session)
+	            .title("과제1")
+	            .description("과제 설명")
+	            .dueAt(LocalDateTime.now())
+	            .build()
+	    );
+
+	    // 제출 데이터 생성
+	    submissionRepository.save(
+	        Submission.builder()
+	            .assignment(assignment)
+	            .member(member)
+	            .build()
+	    );
+
+	    // when
+	    SessionInfoResDto result = sessionService.detailSession(study.getId(), session.getId(), member.getId());
+
+	    // then
+	    assertThat(result.assignments()).hasSize(1);
+	    assertThat(result.assignments().get(0).isSubmitted()).isTrue();
 	}
 }	

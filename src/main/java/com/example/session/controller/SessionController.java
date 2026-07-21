@@ -2,6 +2,7 @@ package com.example.session.controller;
 
 import org.springframework.http.HttpStatus;
 import org.springframework.web.bind.annotation.DeleteMapping;
+import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PatchMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -14,6 +15,7 @@ import com.example.global.security.CurrentUser;
 import com.example.global.security.MemberPrincipal;
 import com.example.session.dto.request.CreateSessionReqDto;
 import com.example.session.dto.request.UpdateSessionReqDto;
+import com.example.session.dto.response.SessionInfoResDto;
 import com.example.session.dto.response.SessionResDto;
 import com.example.session.service.SessionService;
 
@@ -58,5 +60,16 @@ public class SessionController {
 	){
 		sessionService.deleteSession(studyId, sessionId, principal.getMemberId());
 		return CustomResponse.onSuccess(null);
+	}
+	
+	// 스터디 회차 상세 조회 
+	@GetMapping("/studies/{studyId}/sessions/{sessionId}")
+	public CustomResponse<SessionInfoResDto> detailSession(
+			@PathVariable("studyId") Long studyId, 
+			@PathVariable("sessionId") Long sessionId,
+			@CurrentUser MemberPrincipal principal
+	){
+		SessionInfoResDto resDto = sessionService.detailSession(studyId, sessionId, principal.getMemberId());
+		return CustomResponse.onSuccess(resDto);
 	}
 }
