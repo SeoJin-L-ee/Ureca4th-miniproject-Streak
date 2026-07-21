@@ -68,5 +68,17 @@ public class SessionServiceImpl implements SessionService {
 		
 		return SessionConverter.toDetailResDto(session);
 	}
+
+	// 스터디 회차 수정 
+	@Override
+	public void deleteSession(long studyId, long sessionId, long memberId) {
+		
+		// LEADER 로 등록된 Member만 스터디 회차를 생성할 수 있도록 검증
+		if (!participantRepository.existsByStudyIdAndMemberIdAndRole(studyId, memberId, StudyRole.LEADER)) {
+			throw new GeneralException(CommonErrorCode.FORBIDDEN);
+		}
+		
+		sessionRepository.deleteById(sessionId);
+	}
 	
 }

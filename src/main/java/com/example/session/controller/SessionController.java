@@ -1,6 +1,7 @@
 package com.example.session.controller;
 
 import org.springframework.http.HttpStatus;
+import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.PatchMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -46,5 +47,16 @@ public class SessionController {
 	){
 		SessionResDto resDto = sessionService.updateSession(studyId, sessionId, principal.getMemberId(), reqDto); 
 		return CustomResponse.onSuccess(resDto);
+	}
+	
+	// 스터디 회차 삭제 
+	@DeleteMapping("/studies/{studyId}/sessions/{sessionId}")
+	public CustomResponse<Void> deleteSession(
+			@PathVariable("studyId") Long studyId, 
+			@PathVariable("sessionId") Long sessionId,
+			@CurrentUser MemberPrincipal principal
+	){
+		sessionService.deleteSession(studyId, sessionId, principal.getMemberId());
+		return CustomResponse.onSuccess(null);
 	}
 }

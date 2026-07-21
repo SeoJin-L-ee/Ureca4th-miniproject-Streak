@@ -11,4 +11,7 @@ public interface SessionService {
 	
 	// 스터디 회차 수정 
 	SessionResDto updateSession(long studyId, long sessionId, long memberId, UpdateSessionReqDto reqDto);
+	
+	// 스터디 회차 삭제 
+	void deleteSession(long studyId, long sessionId, long memberId);
 }

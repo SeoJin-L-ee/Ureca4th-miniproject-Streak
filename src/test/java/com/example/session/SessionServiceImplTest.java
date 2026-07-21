@@ -178,7 +178,7 @@ public class SessionServiceImplTest {
 		// 응답 DTO 의 필드를 직접 검증 
 		assertThat(response.title()).isEqualTo("테스트 세션 수정1");
 		
-		// 응답 DTO 의 필드를 직접 검증 
+		// DB 저장 상태 검증 
 	    Session saved = sessionRepository.findAll().get(0);
 
 	    assertThat(saved.getTitle()).isEqualTo("테스트 세션 수정1");
@@ -211,6 +211,70 @@ public class SessionServiceImplTest {
 
 	    assertThatThrownBy(() ->
 	        sessionService.updateSession(study.getId(), session.getId(), member.getId(), updateReqDto)
+	    )
+	    .isInstanceOf(RuntimeException.class);
+	}
+	
+	@Test
+	@Order(5)
+	@DisplayName("스터디 회차 삭제 - LEADER")
+	void delete_session() {
+		
+		// given 
+		participantRepository.save(
+                Participant.builder()
+                        .study(study)
+                        .member(member)
+                        .role(StudyRole.LEADER)
+                        .build()
+        );
+		
+		Session session = sessionRepository.save(
+			    Session.builder()
+			    		.study(study)
+			    		.sessionNumber(1)
+				        .title("기존 제목")
+				        .content("기존 내용")
+				        .startsAt(LocalDateTime.now())
+				        .build()
+		);
+		
+		// when 
+		sessionService.deleteSession(study.getId(), session.getId(), member.getId());
+		
+		// then
+		// DB에서 삭제되었는지 확인 
+		boolean exists = sessionRepository.findById(session.getId()).isPresent();
+		assertThat(exists).isFalse();
+	}
+	
+	@Test 
+	@Order(6)
+	@DisplayName("스터디 회차 삭제 실패 - LEADER 아닐 경우")
+	void delete_session_when_member() {
+		
+		// given 
+	    participantRepository.save(
+	    		Participant.builder()
+		            	.study(study)
+			            .member(member)
+			            .role(StudyRole.MEMBER)
+			            .build()
+	    );
+	    
+	    Session session = sessionRepository.save(
+			    Session.builder()
+			    		.study(study)
+			    		.sessionNumber(1)
+				        .title("기존 제목")
+				        .content("기존 내용")
+				        .startsAt(LocalDateTime.now())
+				        .build()
+		);
+	    
+	    // when & then
+	    assertThatThrownBy(() ->
+	        sessionService.deleteSession(study.getId(), session.getId(), member.getId())
 	    )
 	    .isInstanceOf(RuntimeException.class);
 	}
