@@ -68,7 +68,7 @@ public class AuthController {
 
         MemberPrincipal principal = (MemberPrincipal) authentication.getPrincipal();
 
-        return CustomResponse.onSuccess(new MemberResponse(principal.getMemberId(), principal.getEmail(), principal.getName(), principal.getPhone()));
+        return CustomResponse.onSuccess(new MemberResponse(principal.memberId(), principal.email(), principal.name(), principal.phone()));
     }
 
     @GetMapping("/me")
@@ -76,7 +76,7 @@ public class AuthController {
         //인증되지 않은 사용자는 SecurityConfig에서 401 처리
         MemberPrincipal principal = (MemberPrincipal) authentication.getPrincipal();
 
-        return CustomResponse.onSuccess(new MemberResponse(principal.getMemberId(), principal.getEmail(), principal.getName(), principal.getPhone()));
+        return CustomResponse.onSuccess(new MemberResponse(principal.memberId(), principal.email(), principal.name(), principal.phone()));
     }
 
     @PostMapping("/logout")
