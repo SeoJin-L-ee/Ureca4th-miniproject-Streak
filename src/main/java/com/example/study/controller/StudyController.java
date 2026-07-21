@@ -42,7 +42,7 @@ public class StudyController {
 	// 스터디 수정
 	public CustomResponse<StudyInfoResDto> updateStudy(
 			@CurrentUser MemberPrincipal principal,
-			@PathVariable Long studyId,
+			@PathVariable("studyId") Long studyId,
 			@RequestBody UpdateStudyReqDto reqDto
 	) {
 		StudyInfoResDto resDto = studyService.updateStudy(principal.getMemberId(), studyId, reqDto);
@@ -53,8 +53,8 @@ public class StudyController {
 	// 스터디 상태 변경 (모집 중, 모집 완료, 종료됨)
 	public CustomResponse<StudyInfoResDto> updateStudyStatus(
 			@CurrentUser MemberPrincipal principal,
-			@PathVariable Long studyId,
-			@RequestParam StudyStatus status
+			@PathVariable("studyId") Long studyId,
+			@RequestParam("status") StudyStatus status
 	) {
 		StudyInfoResDto resDto = studyService.updateStudyStatus(principal.getMemberId(), studyId, status);
 		return CustomResponse.onSuccess(resDto);
@@ -64,7 +64,7 @@ public class StudyController {
 	// 스터디 soft delete (DELETED)
 	public CustomResponse<Void> softDeleteStudy(
 			@CurrentUser MemberPrincipal principal,
-			@PathVariable Long studyId
+			@PathVariable("studyId") Long studyId
 	) {
 		studyService.softDeleteStudy(principal.getMemberId(), studyId);
 		return CustomResponse.onSuccess(null);
