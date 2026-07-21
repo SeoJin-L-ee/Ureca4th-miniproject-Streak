@@ -11,7 +11,8 @@ import lombok.Getter;
 @AllArgsConstructor
 public enum SessionErrorCode implements BaseErrorCode {
 	
-	SESSION_CREATE_FAILED(HttpStatus.BAD_REQUEST, "SESSION400-1", "회차를 생성할 수 없습니다.");
+	SESSION_NOT_FOUND(HttpStatus.NOT_FOUND, "SESSION404-0", "존재하지 않는 회차입니다."),
+	DUPLICATE_SESSION_NUMBER(HttpStatus.CONFLICT, "SESSION409-0", "이미 존재하는 회차 번호입니다.");
     
     private final HttpStatus status;
     private final String code;

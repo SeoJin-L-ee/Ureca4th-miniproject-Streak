@@ -22,6 +22,7 @@ import com.example.participant.entity.Participant;
 import com.example.participant.entity.enums.StudyRole;
 import com.example.participant.repository.ParticipantRepository;
 import com.example.session.dto.request.CreateSessionReqDto;
+import com.example.session.dto.request.UpdateSessionReqDto;
 import com.example.session.dto.response.SessionDetailResDto;
 import com.example.session.entity.Session;
 import com.example.session.repository.SessionRepository;
@@ -55,7 +56,8 @@ public class SessionServiceImplTest {
 	
 	private Member member;
     private Study study;
-    private CreateSessionReqDto reqDto;
+    private CreateSessionReqDto createReqDto;
+    private UpdateSessionReqDto updateReqDto;
     
 	@BeforeEach
     void setUp() {
@@ -81,10 +83,17 @@ public class SessionServiceImplTest {
                         .build()
         );
         
-        reqDto = new CreateSessionReqDto(
+        createReqDto = new CreateSessionReqDto(
                 1,
                 "테스트 세션1",
                 "테스트 내용 1회차 입니다.",
+                LocalDateTime.now()
+        );
+        
+        updateReqDto = new UpdateSessionReqDto(
+                1,
+                "테스트 세션 수정1",
+                "테스트 내용을 수정하였습니다.",
                 LocalDateTime.now()
         );
     }
@@ -104,7 +113,7 @@ public class SessionServiceImplTest {
         );
 		
 		// when 
-		CustomResponse<SessionDetailResDto> response = sessionService.createSession(study.getId(), member.getId(), reqDto);
+		CustomResponse<SessionDetailResDto> response = sessionService.createSession(study.getId(), member.getId(), createReqDto);
 		
 		// then 
 	    assertThat(response.getResult().title()).isEqualTo("테스트 세션1");
@@ -130,7 +139,73 @@ public class SessionServiceImplTest {
 	    );
 
 	    assertThatThrownBy(() ->
-	        sessionService.createSession(study.getId(), member.getId(), reqDto)
+	        sessionService.createSession(study.getId(), member.getId(), createReqDto)
+	    )
+	    .isInstanceOf(RuntimeException.class);
+	}
+	
+	@Test
+	@Order(3)
+	@DisplayName("스터디 회차 수정 - LEADER")
+	void update_session() {
+		
+		// given 
+		participantRepository.save(
+                Participant.builder()
+                        .study(study)
+                        .member(member)
+                        .role(StudyRole.LEADER)
+                        .build()
+        );
+		
+		Session session = sessionRepository.save(
+			    Session.builder()
+			    		.study(study)
+			    		.sessionNumber(1)
+				        .title("기존 제목")
+				        .content("기존 내용")
+				        .startsAt(LocalDateTime.now())
+				        .build()
+		);
+		
+		// when 
+		CustomResponse<SessionDetailResDto> response = sessionService.updateSession(study.getId(), session.getId(), member.getId(), updateReqDto);
+		
+		// then
+		assertThat(response.getResult().title()).isEqualTo("테스트 세션 수정1");
+		
+	    Session saved = sessionRepository.findAll().get(0);
+
+	    assertThat(saved.getTitle()).isEqualTo("테스트 세션 수정1");
+	    assertThat(saved.getContent()).isEqualTo("테스트 내용을 수정하였습니다.");
+	}
+	
+	@Test 
+	@Order(4)
+	@DisplayName("스터디 회차 수정 실패 - LEADER 아닐 경우")
+	void update_session_when_member() {
+		
+		// given 
+	    participantRepository.save(
+	    		Participant.builder()
+		            	.study(study)
+			            .member(member)
+			            .role(StudyRole.MEMBER)
+			            .build()
+	    );
+	    
+	    Session session = sessionRepository.save(
+			    Session.builder()
+			    		.study(study)
+			    		.sessionNumber(1)
+				        .title("기존 제목")
+				        .content("기존 내용")
+				        .startsAt(LocalDateTime.now())
+				        .build()
+		);
+
+	    assertThatThrownBy(() ->
+	        sessionService.updateSession(study.getId(), session.getId(), member.getId(), updateReqDto)
 	    )
 	    .isInstanceOf(RuntimeException.class);
 	}

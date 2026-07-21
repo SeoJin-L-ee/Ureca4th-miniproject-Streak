@@ -55,5 +55,28 @@ public class Session extends BaseEntity {
 
     @Column(name = "starts_at", nullable = false)
     private LocalDateTime startsAt;
+    
+    public void update(
+            Integer sessionNumber,
+            String title,
+            String content,
+            LocalDateTime startsAt
+    ) {
 
+        if(sessionNumber != null) {
+            this.sessionNumber = sessionNumber;
+        }
+
+        if(title != null) {
+            this.title = title;
+        }
+
+        if(content != null) {
+            this.content = content;
+        }
+
+        if(startsAt != null) {
+            this.startsAt = startsAt;
+        }
+    }
 }
