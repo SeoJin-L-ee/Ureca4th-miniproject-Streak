@@ -56,9 +56,9 @@ public class AuthController {
     public CustomResponse<MemberResponse> login(@Valid @RequestBody LoginRequest request, HttpServletRequest servletRequest, HttpServletResponse servletResponse) {
         
     	//이메일과 비밀번호 검증
-        Authentication authentication = authenticationManager.authenticate(UsernamePasswordAuthenticationToken.unauthenticated(request.getEmail(), request.getPassword()));
-
-        //인증된 사용자 정보 저장
+    	Authentication authentication = authenticationManager.authenticate(UsernamePasswordAuthenticationToken.unauthenticated(request.email(), request.password()));
+        
+    	//인증된 사용자 정보 저장
         SecurityContext securityContext = SecurityContextHolder.createEmptyContext();
         securityContext.setAuthentication(authentication);
         SecurityContextHolder.setContext(securityContext);
@@ -69,13 +69,13 @@ public class AuthController {
 
         MemberPrincipal principal = (MemberPrincipal) authentication.getPrincipal();
 
-        return CustomResponse.onSuccess(new MemberResponse(principal.getMemberId(), principal.getEmail(), principal.getName(), principal.getPhone()));
+        return CustomResponse.onSuccess(new MemberResponse(principal.memberId(), principal.email(), principal.name(), principal.phone()));
     }
 
     @GetMapping("/me")
     public CustomResponse<MemberResponse> me(@CurrentUser MemberPrincipal principal) {
         //인증되지 않은 사용자는 SecurityConfig에서 401 처리
-        return CustomResponse.onSuccess(new MemberResponse(principal.getMemberId(), principal.getEmail(), principal.getName(), principal.getPhone()));
+        return CustomResponse.onSuccess(new MemberResponse(principal.memberId(), principal.email(), principal.name(), principal.phone()));
     }
 
     @PostMapping("/logout")

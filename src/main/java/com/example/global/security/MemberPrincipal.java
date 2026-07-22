@@ -2,7 +2,6 @@ package com.example.global.security;
 
 import com.example.member.entity.Member;
 import com.example.member.entity.enums.MemberStatus;
-import lombok.Getter;
 import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.core.userdetails.UserDetails;
@@ -10,28 +9,25 @@ import org.springframework.security.core.userdetails.UserDetails;
 import java.util.Collection;
 import java.util.List;
 
-@Getter
-public class MemberPrincipal implements UserDetails {
-
-    //세션에 저장될 로그인 사용자 정보
-    private final Long memberId;
-    private final String email;
-    private final String password;
-    private final String name;
-    private final String phone;
-    private final MemberStatus status;
-
-    private MemberPrincipal(Member member) {
-        this.memberId = member.getId();
-        this.email = member.getEmail();
-        this.password = member.getPassword();
-        this.name = member.getName();
-        this.phone = member.getPhone();
-        this.status = member.getStatus();
-    }
+//세션에 저장될 로그인 사용자 정보
+public record MemberPrincipal(
+        Long memberId,
+        String email,
+        String password,
+        String name,
+        String phone,
+        MemberStatus status
+) implements UserDetails {
 
     public static MemberPrincipal from(Member member) {
-        return new MemberPrincipal(member);
+        return new MemberPrincipal(
+                member.getId(),
+                member.getEmail(),
+                member.getPassword(),
+                member.getName(),
+                member.getPhone(),
+                member.getStatus()
+        );
     }
 
     //현재는 모든 ACTIVE 회원을 일반 사용자 처리
@@ -41,7 +37,11 @@ public class MemberPrincipal implements UserDetails {
         return List.of(new SimpleGrantedAuthority("ROLE_USER"));
     }
 
-    
+    @Override
+    public String getPassword() {
+        return password;
+    }
+
     @Override
     public String getUsername() {
         return email;
