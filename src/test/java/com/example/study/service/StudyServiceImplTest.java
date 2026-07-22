@@ -28,6 +28,7 @@ import com.example.participant.repository.ParticipantRepository;
 import com.example.study.dto.request.CreateStudyReqDto;
 import com.example.study.dto.request.UpdateStudyReqDto;
 import com.example.study.dto.response.StudyInfoResDto;
+import com.example.study.dto.response.UpdateStudyLeaderResDto;
 import com.example.study.entity.Study;
 import com.example.study.entity.enums.StudyCategory;
 import com.example.study.entity.enums.StudyStatus;
@@ -257,6 +258,97 @@ class StudyServiceImplTest {
             assertThatThrownBy(() -> studyService.updateStudyStatus(memberId, studyId, StudyStatus.CLOSED))
             									 .isInstanceOf(GeneralException.class);
             assertThat(testStudy.getStatus()).isEqualTo(originalStatus);
+        }
+    }
+    
+    @Nested
+    @DisplayName("스터디장 변경")
+    class UpdateStudyLeader {
+        private final Long newLeaderId = 2L;
+        private Member newLeaderMember;
+        private Participant currentLeaderParticipant;
+        private Participant newLeaderParticipant;
+
+        @BeforeEach
+        void createParticipants() {
+            newLeaderMember = Member.builder()
+                    .id(newLeaderId)
+                    .email("newleader@gmail.com")
+                    .name("새로운 스터디장")
+                    .build();
+
+            currentLeaderParticipant = Participant.builder()
+                    .study(testStudy)
+                    .member(testMember)
+                    .role(StudyRole.LEADER)
+                    .build();
+
+            newLeaderParticipant = Participant.builder()
+                    .study(testStudy)
+                    .member(newLeaderMember)
+                    .role(StudyRole.MEMBER)
+                    .build();
+        }
+
+        @Test
+        @DisplayName("현재 스터디장은 같은 스터디의 participant에게 스터디장 위임 가능")
+        void updateStudyLeader_success() {
+            // given
+            when(participantRepository.findByStudyIdAndMemberId(studyId, memberId)).thenReturn(Optional.of(currentLeaderParticipant));
+            when(participantRepository.findByStudyIdAndMemberIdFetchJoinMember(studyId,newLeaderId)).thenReturn(Optional.of(newLeaderParticipant));
+
+            // when
+            UpdateStudyLeaderResDto result = studyService.updateStudyLeader(memberId, studyId, newLeaderId);
+
+            // then
+            assertThat(result).isNotNull();
+            assertThat(result.studyId()).isEqualTo(studyId);
+            assertThat(result.newLeaderId()).isEqualTo(newLeaderId);
+            assertThat(result.newLeaderName()).isEqualTo("새로운 스터디장");
+            assertThat(currentLeaderParticipant.getRole()).isEqualTo(StudyRole.MEMBER);
+            assertThat(newLeaderParticipant.getRole()).isEqualTo(StudyRole.LEADER);
+        }
+
+        @Test
+        @DisplayName("현재 스터디장 Member가 해당 스터디의 스터디장이 아니면 위임 불가")
+        void updateStudyLeader_currentMemberIsNotLeader() {
+            // given
+            Participant normalParticipant = Participant.builder()
+                    .study(testStudy)
+                    .member(testMember)
+                    .role(StudyRole.MEMBER)
+                    .build();
+
+            when(participantRepository.findByStudyIdAndMemberId(studyId, memberId)).thenReturn(Optional.of(normalParticipant));
+
+            // when, then
+            assertThatThrownBy(() -> studyService.updateStudyLeader(memberId, studyId, newLeaderId)).isInstanceOf(GeneralException.class);
+            assertThat(normalParticipant.getRole()).isEqualTo(StudyRole.MEMBER);
+            verify(participantRepository, never()).findByStudyIdAndMemberIdFetchJoinMember(any(), any());
+        }
+        
+        @Test
+        @DisplayName("현재 스터디장 Member가 해당 스터디의 Member가 아니면 위임 불가")
+        void updateStudyLeader_currentParticipantNotFound() {
+            // given
+            when(participantRepository.findByStudyIdAndMemberId(studyId, memberId)).thenReturn(Optional.empty());
+
+            // when, then
+            assertThatThrownBy(() -> studyService.updateStudyLeader(memberId, studyId, newLeaderId)).isInstanceOf(GeneralException.class);
+            verify(participantRepository, never()).findByStudyIdAndMemberIdFetchJoinMember(any(), any());
+        }
+
+        @Test
+        @DisplayName("새로운 스터디장 Member가 해당 스터디의 Member가 아니면 위임 불가")
+        void updateStudyLeader_newLeaderNotFound() {
+            // given
+            when(participantRepository.findByStudyIdAndMemberId(studyId, memberId)).thenReturn(Optional.of(currentLeaderParticipant));
+            when(participantRepository.findByStudyIdAndMemberIdFetchJoinMember(studyId, newLeaderId)).thenReturn(Optional.empty());
+
+            // when, then
+            assertThatThrownBy(() -> studyService.updateStudyLeader(memberId, studyId, newLeaderId)).isInstanceOf(GeneralException.class);
+            assertThat(currentLeaderParticipant.getRole()).isEqualTo(StudyRole.LEADER);
+            assertThat(newLeaderParticipant.getRole()).isEqualTo(StudyRole.MEMBER);
         }
     }
 

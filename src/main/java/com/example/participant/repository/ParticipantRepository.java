@@ -29,4 +29,10 @@ public interface ParticipantRepository extends JpaRepository<Participant, Long> 
 	// 스터디 ID와 회원 ID로 해당 스터디의 참여자 정보 조회
 	@Query("SELECT p.member FROM Participant p WHERE p.study.id = :studyId AND p.member.id = :memberId")
 	Optional<Member> findMemberByStudyIdAndMemberId(@Param("studyId") Long studyId, @Param("memberId") Long memberId);
+
+	Optional<Participant> findByStudyIdAndMemberId(Long studyId, Long memberId);
+	
+	// 이후 연결된 Member 내부 필드를 얻어야 할 때 N+1 방지 목적
+	@Query("SELECT p FROM Participant p JOIN FETCH p.member WHERE p.study.id = :studyId AND p.member.id = :memberId")
+    Optional<Participant> findByStudyIdAndMemberIdFetchJoinMember(@Param("studyId") Long studyId, @Param("memberId") Long memberId);
 }

@@ -54,4 +54,7 @@ public class Participant extends BaseEntity {
     @Column(nullable = false, length = 20)
     private StudyRole role;
     
+    public void updateRole(StudyRole role) {
+    	this.role = role;
+    }
 }
