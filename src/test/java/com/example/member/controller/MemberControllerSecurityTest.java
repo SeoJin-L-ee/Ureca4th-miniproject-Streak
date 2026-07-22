@@ -23,11 +23,11 @@ import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.MvcResult;
 
-import com.example.auth.dto.response.MemberResponse;
 import com.example.global.security.MemberPrincipal;
 import com.example.global.security.MemberUserDetailsService;
 import com.example.global.security.SecurityConfig;
-import com.example.member.dto.request.MemberUpdateRequest;
+import com.example.member.dto.request.UpdateMemberReqDto;
+import com.example.member.dto.response.MemberResDto;
 import com.example.member.entity.Member;
 import com.example.member.entity.enums.MemberStatus;
 import com.example.member.service.MemberService;
@@ -57,8 +57,8 @@ public class MemberControllerSecurityTest {
     @Test
     @DisplayName("me 조회는 미인증이면 401")
     void meNotAuthenticated401() throws Exception {
-        MvcResult result = mockMvc.perform(get("/api/members/me")).andExpect(status().isUnauthorized()).andReturn();
-        logResult("GET /api/members/me (미인증)", result);
+        MvcResult result = mockMvc.perform(get("/api/users/me")).andExpect(status().isUnauthorized()).andReturn();
+        logResult("GET /api/users/me (미인증)", result);
     }
 
     @Test
@@ -66,38 +66,38 @@ public class MemberControllerSecurityTest {
     void meAuthenticated200() throws Exception {
         MemberPrincipal p = principal();
         
-        given(memberService.getMyInfo(1L)).willReturn(new MemberResponse(1L, "test@test.com", "길동이", "010-1234-5678"));
+        given(memberService.getMyInfo(1L)).willReturn(new MemberResDto(1L, "test@test.com", "길동이", "010-1234-5678"));
 
-        MvcResult result = mockMvc.perform(get("/api/members/me").with(authentication(new UsernamePasswordAuthenticationToken(p, null, p.getAuthorities()))))
+        MvcResult result = mockMvc.perform(get("/api/users/me").with(authentication(new UsernamePasswordAuthenticationToken(p, null, p.getAuthorities()))))
 													                .andExpect(status().isOk())
 													                .andExpect(jsonPath("$.result.name").value("길동이"))
 													                .andReturn();
-        logResult("GET /api/members/me (인증됨)", result);
+        logResult("GET /api/users/me (인증됨)", result);
     }
 
     @Test
     @DisplayName("me 수정은 csrf 없으면 403")
     void updateNoCsrf403() throws Exception {
         MemberPrincipal p = principal();
-        MemberUpdateRequest request = new MemberUpdateRequest("변경이름", "010-9999-9999", null, null);
+        UpdateMemberReqDto request = new UpdateMemberReqDto("변경이름", "010-9999-9999", null, null);
 
-        MvcResult result = mockMvc.perform(patch("/api/members/me").with(authentication(new UsernamePasswordAuthenticationToken(p, null, p.getAuthorities())))
+        MvcResult result = mockMvc.perform(patch("/api/users/me").with(authentication(new UsernamePasswordAuthenticationToken(p, null, p.getAuthorities())))
 											                        .contentType(MediaType.APPLICATION_JSON)
 											                        .content(objectMapper.writeValueAsBytes(request)))
                 													.andExpect(status().isForbidden()).andReturn();
-        logResult("PATCH /api/members/me (CSRF 없음)", result);
+        logResult("PATCH /api/users/me (CSRF 없음)", result);
     }
 
     @Test
     @DisplayName("이름/전화번호만 바꾸면 200, reLoginRequired는 false, 세션 유지")
     void updateProfileOnlySuccess() throws Exception {
         MemberPrincipal p = principal();
-        MemberUpdateRequest request = new MemberUpdateRequest("변경이름", "010-9999-9999", null, null);
-        given(memberService.updateMyInfo(eq(1L), any())).willReturn(new MemberResponse(1L, "test@test.com", "변경이름", "010-9999-9999"));
+        UpdateMemberReqDto request = new UpdateMemberReqDto("변경이름", "010-9999-9999", null, null);
+        given(memberService.updateMyInfo(eq(1L), any())).willReturn(new MemberResDto(1L, "test@test.com", "변경이름", "010-9999-9999"));
 
         MockHttpSession session = new MockHttpSession();
 
-        MvcResult result = mockMvc.perform(patch("/api/members/me").with(csrf())
+        MvcResult result = mockMvc.perform(patch("/api/users/me").with(csrf())
 											                        .with(authentication(new UsernamePasswordAuthenticationToken(p, null, p.getAuthorities())))
 											                        .session(session)
 											                        .contentType(MediaType.APPLICATION_JSON)
@@ -106,7 +106,7 @@ public class MemberControllerSecurityTest {
 					                .andExpect(jsonPath("$.result.member.name").value("변경이름"))
 					                .andExpect(jsonPath("$.result.reLoginRequired").value(false))
 					                .andReturn();
-        logResult("PATCH /api/members/me (이름/전화번호만 변경)", result);
+        logResult("PATCH /api/users/me (이름/전화번호만 변경)", result);
 
         log.info("[검증] 세션 무효화 여부 -> isInvalid={}", session.isInvalid());
         assertThat(session.isInvalid()).isFalse();
@@ -116,13 +116,13 @@ public class MemberControllerSecurityTest {
     @DisplayName("비밀번호 변경이 성공하면 reLoginRequired는 true이고 세션이 무효화된다")
     void updatePasswordSuccessInvalidatesSession() throws Exception {
         MemberPrincipal p = principal();
-        MemberUpdateRequest request = new MemberUpdateRequest("길동이", "010-1234-5678", "oldpass12", "newpass34");
+        UpdateMemberReqDto request = new UpdateMemberReqDto("길동이", "010-1234-5678", "oldpass12", "newpass34");
         
-        given(memberService.updateMyInfo(eq(1L), any())).willReturn(new MemberResponse(1L, "test@test.com", "길동이", "010-1234-5678"));
+        given(memberService.updateMyInfo(eq(1L), any())).willReturn(new MemberResDto(1L, "test@test.com", "길동이", "010-1234-5678"));
 
         MockHttpSession session = new MockHttpSession();
 
-        MvcResult result = mockMvc.perform(patch("/api/members/me").with(csrf())
+        MvcResult result = mockMvc.perform(patch("/api/users/me").with(csrf())
 											                        .with(authentication(new UsernamePasswordAuthenticationToken(p, null, p.getAuthorities())))
 											                        .session(session)
 											                        .contentType(MediaType.APPLICATION_JSON)
@@ -130,7 +130,7 @@ public class MemberControllerSecurityTest {
 					                .andExpect(status().isOk())
 					                .andExpect(jsonPath("$.result.reLoginRequired").value(true))
 					                .andReturn();
-        logResult("PATCH /api/members/me (비밀번호 변경)", result);
+        logResult("PATCH /api/users/me (비밀번호 변경)", result);
 
         log.info("[검증] 세션 무효화 여부 -> isInvalid={}", session.isInvalid());
         assertThat(session.isInvalid()).isTrue();
@@ -140,13 +140,13 @@ public class MemberControllerSecurityTest {
     @DisplayName("이름이 빈 값이면 400")
     void updateBlankName400() throws Exception {
         MemberPrincipal p = principal();
-        MemberUpdateRequest request = new MemberUpdateRequest("", "010-9999-9999", null, null);
+        UpdateMemberReqDto request = new UpdateMemberReqDto("", "010-9999-9999", null, null);
 
-        MvcResult result = mockMvc.perform(patch("/api/members/me").with(csrf())
+        MvcResult result = mockMvc.perform(patch("/api/users/me").with(csrf())
 											                        .with(authentication(new UsernamePasswordAuthenticationToken(p, null, p.getAuthorities())))
 											                        .contentType(MediaType.APPLICATION_JSON)
 											                        .content(objectMapper.writeValueAsBytes(request)))
                 					.andExpect(status().isBadRequest()).andReturn();
-        logResult("PATCH /api/members/me (이름 빈값)", result);
+        logResult("PATCH /api/users/me (이름 빈값)", result);
     }
 }

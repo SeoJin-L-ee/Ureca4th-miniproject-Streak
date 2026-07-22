@@ -14,10 +14,10 @@ import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.security.crypto.password.PasswordEncoder;
 
 import com.example.global.common.exception.GeneralException;
-import com.example.member.MemberErrorCode;
-import com.example.member.dto.request.MemberUpdateRequest;
+import com.example.member.dto.request.UpdateMemberReqDto;
 import com.example.member.entity.Member;
 import com.example.member.entity.enums.MemberStatus;
+import com.example.member.exception.code.MemberErrorCode;
 import com.example.member.repository.MemberRepository;
 
 import lombok.extern.slf4j.Slf4j;
@@ -40,7 +40,7 @@ public class MemberServiceTest {
         Member member = member();
         given(memberRepository.findById(1L)).willReturn(Optional.of(member));
 
-        memberService.updateMyInfo(1L, new MemberUpdateRequest("변경이름", "010-9999-9999", null, null));
+        memberService.updateMyInfo(1L, new UpdateMemberReqDto("변경이름", "010-9999-9999", null, null));
 
         log.info("[검증] updateProfileOnly -> name={}, phone={}, password={}", member.getName(), member.getPhone(), member.getPassword());
 
@@ -57,7 +57,7 @@ public class MemberServiceTest {
         given(passwordEncoder.matches("oldpass12", "encodedOld")).willReturn(true);
         given(passwordEncoder.encode("newpass34")).willReturn("encodedNew");
 
-        memberService.updateMyInfo(1L, new MemberUpdateRequest("길동이", "010-1234-5678", "oldpass12", "newpass34"));
+        memberService.updateMyInfo(1L, new UpdateMemberReqDto("길동이", "010-1234-5678", "oldpass12", "newpass34"));
 
         log.info("[검증] changePasswordSuccess -> password={}", member.getPassword());
         assertThat(member.getPassword()).isEqualTo("encodedNew");
@@ -71,7 +71,7 @@ public class MemberServiceTest {
         given(passwordEncoder.matches("wrongpass", "encodedOld")).willReturn(false);
 
         Throwable thrown = org.assertj.core.api.Assertions.catchThrowable(() ->
-        						memberService.updateMyInfo(1L, new MemberUpdateRequest("길동이", "010-1234-5678", "wrongpass", "newpass34")));
+        						memberService.updateMyInfo(1L, new UpdateMemberReqDto("길동이", "010-1234-5678", "wrongpass", "newpass34")));
 
         log.info("[검증] changePasswordWrongCurrentPassword -> exception={}", thrown.getMessage());
         assertThat(thrown).isInstanceOf(GeneralException.class);
@@ -84,7 +84,7 @@ public class MemberServiceTest {
         given(memberRepository.findById(999L)).willReturn(Optional.empty());
 
         Throwable thrown = org.assertj.core.api.Assertions.catchThrowable(() ->
-        						memberService.updateMyInfo(999L, new MemberUpdateRequest("길동이", "010-1234-5678", null, null)));
+        						memberService.updateMyInfo(999L, new UpdateMemberReqDto("길동이", "010-1234-5678", null, null)));
 
         log.info("[검증] memberNotFound -> exception={}", thrown.getMessage());
         assertThat(thrown).isInstanceOf(GeneralException.class);

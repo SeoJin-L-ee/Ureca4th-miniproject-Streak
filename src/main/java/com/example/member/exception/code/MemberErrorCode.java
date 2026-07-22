@@ -1,4 +1,4 @@
-package com.example.member;
+package com.example.member.exception.code;
 
 import org.springframework.http.HttpStatus;
 

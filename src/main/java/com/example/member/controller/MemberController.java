@@ -8,12 +8,13 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
-import com.example.auth.dto.response.MemberResponse;
 import com.example.global.common.CustomResponse;
 import com.example.global.security.CurrentUser;
 import com.example.global.security.MemberPrincipal;
-import com.example.member.dto.request.MemberUpdateRequest;
-import com.example.member.dto.response.MemberUpdateResponse;
+import com.example.member.converter.MemberConverter;
+import com.example.member.dto.request.UpdateMemberReqDto;
+import com.example.member.dto.response.MemberResDto;
+import com.example.member.dto.response.UpdateMemberResDto;
 import com.example.member.service.MemberService;
 
 import jakarta.servlet.http.HttpServletRequest;
@@ -22,28 +23,28 @@ import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 
 @RestController
-@RequestMapping("/api/members")
+@RequestMapping("/api/users")
 @RequiredArgsConstructor
 public class MemberController {
 
     private final MemberService memberService;
 
     @GetMapping("/me")
-    public CustomResponse<MemberResponse> me(@CurrentUser MemberPrincipal principal) {
+    public CustomResponse<MemberResDto> me(@CurrentUser MemberPrincipal principal) {
     	
     	//인증되지 않은 사용자는 401 처리
         return CustomResponse.onSuccess(memberService.getMyInfo(principal.memberId()));
     }
 
     @PatchMapping("/me")
-    public CustomResponse<MemberUpdateResponse> updateMe(@CurrentUser MemberPrincipal principal,
-												            @Valid @RequestBody MemberUpdateRequest request,
+    public CustomResponse<UpdateMemberResDto> updateMe(@CurrentUser MemberPrincipal principal,
+												            @Valid @RequestBody UpdateMemberReqDto request,
 												            HttpServletRequest servletRequest,
 												            HttpServletResponse servletResponse,
 												            Authentication authentication
 												            )
     {
-        MemberResponse response = memberService.updateMyInfo(principal.memberId(), request);
+        MemberResDto response = memberService.updateMyInfo(principal.memberId(), request);
 
         //비밀번호 변경 시 재로그인
         boolean reLoginRequired = request.newPassword() != null;
@@ -53,6 +54,6 @@ public class MemberController {
             new SecurityContextLogoutHandler().logout(servletRequest, servletResponse, authentication);
         }
 
-        return CustomResponse.onSuccess(MemberUpdateResponse.of(response, reLoginRequired));
+        return CustomResponse.onSuccess(MemberConverter.toMemberUpdateResDto(response, reLoginRequired));
     }
 }
