@@ -48,7 +48,7 @@ public class AssignmentServiceImpl implements AssignmentService {
 		return AssignmentConverter.toAssignmentInfoResDto(savedAssignment);
 	}
 
-	// 과제 수정 
+	// 스터디장만 과제 수정 가능 
 	@Override
 	@Transactional
 	public AssignmentInfoResDto updateAssignment(Long studyId, Long sessionId, Long assignmentId, Long memberId, UpdateAssignmentReqDto reqDto) {
@@ -67,6 +67,27 @@ public class AssignmentServiceImpl implements AssignmentService {
 		assignment.updateAssignment(reqDto);
 		
 		return AssignmentConverter.toAssignmentInfoResDto(assignment);
+	}
+
+	
+	// 스터디장만 과제 삭제 가능 
+	@Override
+	@Transactional
+	public void deleteAssignment(Long studyId, Long sessionId, Long assignmentId, Long memberId) {
+		
+		// LEADER 로 등록된 Member만 스터디 회차를 생성할 수 있도록 검증
+		if (!participantRepository.existsByStudyIdAndMemberIdAndRole(studyId, memberId, StudyRole.LEADER)) {
+			throw new GeneralException(CommonErrorCode.FORBIDDEN);
+		}
+		
+		// 해당 회차가 해당 스터디 소속인지 검증 
+		if(!sessionRepository.existsByIdAndStudyId(sessionId, studyId)) throw new GeneralException(SessionErrorCode.NOT_STUDY_SESSION);
+				
+		// 회차가 존재하고, 그 회차에 속해있는 과제인지 검증 
+		Assignment assignment = assignmentRepository.findByIdAndSessionId(assignmentId, sessionId)
+				.orElseThrow(() -> new GeneralException(AssignmentErrorCode.ASSIGNMENT_NOT_FOUND));
+		
+		assignmentRepository.delete(assignment);
 	}
 	
 }

@@ -326,4 +326,71 @@ public class AssignmentServiceImplTest {
             .isInstanceOf(GeneralException.class);
         }
     }
+    
+    @Nested
+    @DisplayName("과제 삭제 (deleteAssignment)")
+    class DeleteAssignment {
+
+        private Assignment assignment;
+
+        @BeforeEach
+        void setUpAssignment() {
+            assignment = assignmentRepository.save(
+                    Assignment.builder()
+                            .session(session)
+                            .title("삭제할 과제 제목")
+                            .description("삭제할 과제 설명")
+                            .dueAt(LocalDateTime.of(2026, 7, 12, 23, 59))
+                            .build()
+            );
+        }
+
+        @Test
+        @DisplayName("성공: 스터디장이 과제 삭제를 요청하면 DB에서 과제가 제거된다.")
+        void deleteAssignment_Success() {
+        	
+            // when
+            assignmentService.deleteAssignment(
+                    study.getId(),
+                    session.getId(),
+                    assignment.getId(),
+                    leaderMember.getId()
+            );
+
+            // then
+            assertThat(assignmentRepository.findById(assignment.getId())).isEmpty();
+        }
+
+        @Test
+        @DisplayName("실패: 일반 회원이 삭제를 요청하면 예외가 발생한다.")
+        void deleteAssignment_Fail_Forbidden() {
+        	
+            // when & then
+            assertThatThrownBy(() -> assignmentService.deleteAssignment(
+                    study.getId(),
+                    session.getId(),
+                    assignment.getId(),
+                    normalMember.getId()
+            )).isInstanceOf(GeneralException.class);
+
+            // DB 데이터 삭제 안 됨 검증
+            assertThat(assignmentRepository.findById(assignment.getId())).isPresent();
+        }
+
+        @Test
+        @DisplayName("실패: 존재하지 않거나 해당 회차에 속하지 않은 과제 ID 삭제 요청 시 예외가 발생한다.")
+        void deleteAssignment_Fail_NotFoundAssignment() {
+        	
+            // given
+            Long invalidAssignmentId = 9999L;
+
+            // when & then
+            assertThatThrownBy(() -> assignmentService.deleteAssignment(
+                    study.getId(),
+                    session.getId(),
+                    invalidAssignmentId,
+                    leaderMember.getId()
+            )).isInstanceOf(GeneralException.class);
+        }
+    }
 }

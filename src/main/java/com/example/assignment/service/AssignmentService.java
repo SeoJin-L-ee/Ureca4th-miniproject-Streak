@@ -11,4 +11,7 @@ public interface AssignmentService {
 	
 	// 과제 수정 - 스터디장만 가능 
 	AssignmentInfoResDto updateAssignment(Long studyId, Long sessionId, Long assignmentId, Long memberId, UpdateAssignmentReqDto reqDto);
+	
+	// 과제 삭제 - 스터디장만 가능 
+	void deleteAssignment(Long studyId, Long sessionId, Long assignmentId, Long memberId);
 }
