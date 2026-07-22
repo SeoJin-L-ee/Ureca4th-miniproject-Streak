@@ -12,4 +12,7 @@ public interface SessionRepository extends JpaRepository<Session, Long>{
 	
 	// 스터디 내에 있는 모든 회차를 조회 
 	List<Session> findAllByStudyIdOrderBySessionNumberDesc(Long studyId);
+	
+	// 스터디 내에 있는 모든 회차의 개수를 조회 
+	int countByStudyId(Long studyId);
 }
