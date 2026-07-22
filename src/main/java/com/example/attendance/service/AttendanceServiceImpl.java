@@ -1,5 +1,6 @@
 package com.example.attendance.service;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
@@ -7,6 +8,8 @@ import java.util.stream.Collectors;
 import org.springframework.stereotype.Service;
 
 import com.example.attendance.converter.AttendanceConverter;
+import com.example.attendance.dto.request.BatchSaveAttendanceReqDto;
+import com.example.attendance.dto.request.UpdateAttendanceReqDto;
 import com.example.attendance.dto.response.AttendanceListResDto;
 import com.example.attendance.dto.response.AttendanceMemberResDto;
 import com.example.attendance.dto.response.AttendanceParticipantResDto;
@@ -19,11 +22,15 @@ import com.example.global.common.exception.GeneralException;
 import com.example.member.entity.Member;
 import com.example.participant.entity.Participant;
 import com.example.participant.entity.enums.StudyRole;
+import com.example.participant.exception.ParticipantErrorCode;
 import com.example.participant.repository.ParticipantRepository;
+import com.example.session.entity.Session;
+import com.example.session.exception.code.SessionErrorCode;
 import com.example.session.repository.SessionRepository;
 import com.example.study.exception.StudyErrorCode;
 import com.example.study.repository.StudyRepository;
 
+import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 
 @Service
@@ -99,5 +106,58 @@ public class AttendanceServiceImpl implements AttendanceService {
 	            		.toList();
 		
 		return new AttendanceSessionResDto(sessionId, participants);
+	}
+
+
+	// 참여자 출석 사항 저장 - 스터디장 전용 
+	@Override
+	@Transactional
+	public void updateSessionAttendances(
+			long studyId, long sessionId, 
+			long memberId, 
+			BatchSaveAttendanceReqDto reqDto
+	) {
+		
+		if (!studyRepository.existsById(studyId)) throw new GeneralException(StudyErrorCode.STUDY_NOT_FOUND);
+		
+		// LEADER 로 등록된 Member 만 스터디 회차를 생성할 수 있도록 검증
+		if (!participantRepository.existsByStudyIdAndMemberIdAndRole(studyId, memberId, StudyRole.LEADER)) {
+			throw new GeneralException(CommonErrorCode.FORBIDDEN);
+		}
+		
+		Session session = sessionRepository.findById(sessionId)
+						.orElseThrow(() -> new GeneralException(SessionErrorCode.SESSION_NOT_FOUND));
+		
+		
+		// 해당 회차에 이미 존재하던 출석 데이터 Map 변환
+        Map<Long, Attendance> existingAttendanceMap = attendanceRepository.findAllBySessionId(sessionId)
+                		.stream()
+                		.collect(Collectors.toMap(a -> a.getMember().getId(), a -> a));
+
+        List<Attendance> attendancesToSave = new ArrayList<>();
+
+        for (UpdateAttendanceReqDto dto : reqDto.attendances()) {
+        	
+            if (existingAttendanceMap.containsKey(dto.memberId())) {
+            	
+                // 이미 기존 기록이 존재하면 status 업데이트
+                Attendance attendance = existingAttendanceMap.get(dto.memberId());
+                attendance.updateStatus(dto.status());
+                
+            } else {
+            	
+                // 기존 기록이 없으면 신규 Attendance 엔티티 생성 후 추가
+                Member member = participantRepository.findMemberByStudyIdAndMemberId(studyId, dto.memberId())
+                        	.orElseThrow(() -> new GeneralException(ParticipantErrorCode.PARTICIPANT_NOT_FOUND));
+
+                Attendance newAttendance = AttendanceConverter.toEntity(session, member, dto.status());
+                attendancesToSave.add(newAttendance);
+            }
+        }
+
+        // 새로 추가된 출석 건 일괄 저장
+        if (!attendancesToSave.isEmpty()) {
+            attendanceRepository.saveAll(attendancesToSave);
+        }
 	}
 }

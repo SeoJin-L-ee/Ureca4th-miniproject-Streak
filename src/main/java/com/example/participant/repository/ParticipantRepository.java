@@ -1,6 +1,7 @@
 package com.example.participant.repository;
 
 import java.util.List;
+import java.util.Optional;
 
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
@@ -21,6 +22,11 @@ public interface ParticipantRepository extends JpaRepository<Participant, Long> 
 	// 스터디에 참여한 모든 member 조회 
 	List<Participant> findAllByStudyId(Long studyId);
 	
+	// 스터디에 참여한 모든 Member를 조회 
 	@Query("SELECT p.member FROM Participant p WHERE p.study.id = :studyId")
 	List<Member> findMembersByStudyId(@Param("studyId") Long studyId);
+	
+	// 스터디 ID와 회원 ID로 해당 스터디의 참여자 정보 조회
+	@Query("SELECT p.member FROM Participant p WHERE p.study.id = :studyId AND p.member.id = :memberId")
+	Optional<Member> findMemberByStudyIdAndMemberId(@Param("studyId") Long studyId, @Param("memberId") Long memberId);
 }

@@ -18,6 +18,8 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.transaction.annotation.Transactional;
 
+import com.example.attendance.dto.request.BatchSaveAttendanceReqDto;
+import com.example.attendance.dto.request.UpdateAttendanceReqDto;
 import com.example.attendance.dto.response.AttendanceListResDto;
 import com.example.attendance.dto.response.AttendanceMemberResDto;
 import com.example.attendance.dto.response.AttendanceParticipantResDto;
@@ -225,8 +227,9 @@ public class AttendanceServiceImplTest {
         assertThat(result.averageAttendanceRate()).isEqualTo(0.0);
     }
     
-    @Order(4)
+    
     @Nested
+    @Order(4)
     @DisplayName("회차별 참여자 출석 목록 조회 테스트")
     class GetSessionAttendancesTest {
 
@@ -286,7 +289,7 @@ public class AttendanceServiceImplTest {
 
         @Test
         @DisplayName("실패: 스터디장이 아닌 스터디원이 조회 시 예외가 발생한다.")
-        void getSessionAttendances_Forbidden_NotLeader() {
+        void getSessionAttendances_NotLeader() {
         	
         	// given - member2는 LEADER가 아닌 MEMBER로 등록
         	participantRepository.save(
@@ -302,6 +305,121 @@ public class AttendanceServiceImplTest {
                     study.getId(), 
                     session1.getId(), 
                     member2.getId()
+            ))
+            .isInstanceOf(GeneralException.class);
+        }
+    }
+    
+    
+    
+    @Nested
+    @Order(5)
+    @DisplayName("참여자 출석 사항 저장(수정) - 스터디장 전용 테스트")
+    class UpdateSessionAttendancesTest {
+
+        @Test
+        @DisplayName("성공: 스터디장은 회차별 출석 정보를 새로 저장하거나 수정할 수 있다.")
+        void updateSessionAttendances_Success() {
+        	
+            // given
+            // member1을 LEADER, member2를 MEMBER로 등록
+            participantRepository.save(
+                    Participant.builder()
+                            .study(study)
+                            .member(member1)
+                            .role(StudyRole.LEADER)
+                            .build()
+            );
+            
+            participantRepository.save(
+                    Participant.builder()
+                            .study(study)
+                            .member(member2)
+                            .role(StudyRole.MEMBER)
+                            .build()
+            );
+
+            // 기존 출석 데이터 세팅 (member1: 기존 PRESENT 출석 기록 존재)
+            attendanceRepository.save(
+                    Attendance.builder()
+                            .session(session1)
+                            .member(member1)
+                            .status(AttendanceStatus.PRESENT)
+                            .build()
+            );
+
+            // 요청 DTO 준비 (member1: PRESENT -> ABSENT로 수정, member2: 신규 PRESENT 저장)
+            UpdateAttendanceReqDto dto1 = new UpdateAttendanceReqDto(member1.getId(), AttendanceStatus.ABSENT);
+            UpdateAttendanceReqDto dto2 = new UpdateAttendanceReqDto(member2.getId(), AttendanceStatus.PRESENT);
+            BatchSaveAttendanceReqDto reqDto = new BatchSaveAttendanceReqDto(List.of(dto1, dto2));
+
+            // when
+            attendanceService.updateSessionAttendances(study.getId(), session1.getId(), member1.getId(), reqDto);
+
+            // then
+            List<Attendance> savedAttendances = attendanceRepository.findAllBySessionId(session1.getId());
+            assertThat(savedAttendances).hasSize(2);
+
+            // member1의 상태가 ABSENT로 변경되었는지 확인
+            Attendance updatedMember1 = savedAttendances.stream()
+                    .filter(a -> a.getMember().getId().equals(member1.getId()))
+                    .findFirst()
+                    .orElseThrow();
+            
+            assertThat(updatedMember1.getStatus()).isEqualTo(AttendanceStatus.ABSENT);
+
+            // member2의 출석 정보가 신규 생성되었는지 확인
+            Attendance newMember2 = savedAttendances.stream()
+                    .filter(a -> a.getMember().getId().equals(member2.getId()))
+                    .findFirst()
+                    .orElseThrow();
+            
+            assertThat(newMember2.getStatus()).isEqualTo(AttendanceStatus.PRESENT);
+        }
+
+        @Test
+        @DisplayName("실패: 스터디장이 아닌 일반 멤버가 출석 저장을 시도하면 예외가 발생한다.")
+        void updateSessionAttendances_NotLeader() {
+        	
+            // given
+            participantRepository.save(
+                    Participant.builder()
+                            .study(study)
+                            .member(member2)
+                            .role(StudyRole.MEMBER)
+                            .build()
+            );
+
+            UpdateAttendanceReqDto dto = new UpdateAttendanceReqDto(member2.getId(), AttendanceStatus.PRESENT);
+            BatchSaveAttendanceReqDto reqDto = new BatchSaveAttendanceReqDto(List.of(dto));
+
+            // when & then (MEMBER인 member2가 요청 시 예외 발생)
+            assertThatThrownBy(() -> attendanceService.updateSessionAttendances(
+                    study.getId(), session1.getId(), member2.getId(), reqDto
+            ))
+            .isInstanceOf(GeneralException.class);
+        }
+
+        @Test
+        @DisplayName("실패: 존재하지 않는 세션 ID로 출석 저장 시 예외가 발생한다.")
+        void updateSessionAttendances_SessionNotFound() {
+        	
+            // given
+            participantRepository.save(
+                    Participant.builder()
+                            .study(study)
+                            .member(member1)
+                            .role(StudyRole.LEADER)
+                            .build()
+            );
+
+            UpdateAttendanceReqDto dto = new UpdateAttendanceReqDto(member1.getId(), AttendanceStatus.PRESENT);
+            BatchSaveAttendanceReqDto reqDto = new BatchSaveAttendanceReqDto(List.of(dto));
+            long invalidSessionId = 999L;
+
+            // when & then
+            assertThatThrownBy(() -> attendanceService.updateSessionAttendances(
+                    study.getId(), invalidSessionId, member1.getId(), reqDto
             ))
             .isInstanceOf(GeneralException.class);
         }

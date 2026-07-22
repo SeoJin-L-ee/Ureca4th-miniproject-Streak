@@ -1,14 +1,15 @@
 package com.example.attendance.converter;
 
 import java.util.List;
-import java.util.Map;
 
 import com.example.attendance.dto.response.AttendanceListResDto;
 import com.example.attendance.dto.response.AttendanceMemberResDto;
 import com.example.attendance.dto.response.AttendanceParticipantResDto;
+import com.example.attendance.entity.Attendance;
 import com.example.attendance.entity.enums.AttendanceStatus;
 import com.example.member.entity.Member;
 import com.example.participant.entity.Participant;
+import com.example.session.entity.Session;
 
 public class AttendanceConverter {
 	
@@ -51,4 +52,13 @@ public class AttendanceConverter {
         );
 	}
 	
+	
+	// Session, Member, Status를 기반으로 Attendance 엔티티 생성 
+	public static Attendance toEntity(Session session, Member member, AttendanceStatus status) {
+	    return Attendance.builder()
+	            .session(session)
+	            .member(member)
+	            .status(status)
+	            .build();
+	}
 }

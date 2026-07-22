@@ -54,4 +54,7 @@ public class Attendance extends BaseEntity {
     @Column(nullable = false, length = 20)
     private AttendanceStatus status;
     
+    public void updateStatus(AttendanceStatus status) {
+    	this.status = status;
+    }
 }

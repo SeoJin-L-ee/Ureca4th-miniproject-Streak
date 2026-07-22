@@ -1,5 +1,6 @@
 package com.example.attendance.service;
 
+import com.example.attendance.dto.request.BatchSaveAttendanceReqDto;
 import com.example.attendance.dto.response.AttendanceListResDto;
 import com.example.attendance.dto.response.AttendanceSessionResDto;
 
@@ -10,4 +11,7 @@ public interface AttendanceService {
 	
 	// 회차별 참여자 출석 목록 조회 
 	AttendanceSessionResDto getSessionAttendances(long studyId, long sessionId, long memberId);
+	
+	// 참여자 출석 사항 저장 
+	void updateSessionAttendances(long studyId, long sessionId, long memberId, BatchSaveAttendanceReqDto reqDto);
 }
