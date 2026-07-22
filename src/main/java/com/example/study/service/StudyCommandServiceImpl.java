@@ -26,7 +26,7 @@ import lombok.RequiredArgsConstructor;
 
 @Service
 @RequiredArgsConstructor
-public class StudyServiceImpl implements StudyService {
+public class StudyCommandServiceImpl implements StudyCommandService {
 
 	private final StudyRepository studyRepository;
 	private final MemberRepository memberRepository;
