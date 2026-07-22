@@ -27,6 +27,7 @@ import com.example.member.entity.enums.MemberStatus;
 import com.example.study.dto.request.CreateStudyReqDto;
 import com.example.study.dto.request.UpdateStudyReqDto;
 import com.example.study.dto.response.StudyInfoResDto;
+import com.example.study.dto.response.UpdateStudyLeaderResDto;
 import com.example.study.entity.enums.StudyCategory;
 import com.example.study.entity.enums.StudyStatus;
 import com.example.study.service.StudyService;
@@ -99,11 +100,9 @@ public class StudyControllerTest {
     @DisplayName("스터디 상태 변경 (PATCH /api/studies/{studyId}/status)")
     void updateStudyStatus() throws Exception {
         StudyInfoResDto resDto = new StudyInfoResDto("제목", "설명", 5, null, StudyStatus.CLOSED);
-
         given(studyService.updateStudyStatus(any(), eq(1L), eq(StudyStatus.CLOSED))).willReturn(resDto);
 
-        // when & then
-        mockMvc.perform(
+        this.mockMvc.perform(
         		patch("/api/studies/{studyId}/status", 1L)
         			.with(csrf())
         			.with(authentication(getAuthentication()))
@@ -113,11 +112,26 @@ public class StudyControllerTest {
     }
     
     @Test
+    @DisplayName("스터디장 변경 (PATCH /api/studies/{studyId}/leader)")
+    void updateStudyLeader() throws Exception {
+        UpdateStudyLeaderResDto resDto = new UpdateStudyLeaderResDto(1L, 1L, "새 스터디장 이름");
+        given(studyService.updateStudyLeader(any(), eq(1L), eq(1L))).willReturn(resDto);
+        
+        this.mockMvc.perform(
+        		patch("/api/studies/{studyId}/leader", 1L)
+        			.with(csrf())
+        			.with(authentication(getAuthentication()))
+        			.param("newLeaderId", String.valueOf(1L))
+        )
+        .andExpect(status().isOk());
+    }
+    
+    @Test
     @DisplayName("스터디 soft delete (DELETE /api/studies/{studyId})")
     void softDeleteStudy() throws Exception {
         doNothing().when(studyService).softDeleteStudy(any(), eq(1L));
 
-        mockMvc.perform(
+        this.mockMvc.perform(
         		delete("/api/studies/{studyId}", 1L)
         			.with(csrf())
         			.with(authentication(getAuthentication()))

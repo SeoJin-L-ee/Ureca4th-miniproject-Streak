@@ -9,11 +9,13 @@ import com.example.member.entity.Member;
 import com.example.member.repository.MemberRepository;
 import com.example.participant.entity.Participant;
 import com.example.participant.entity.enums.StudyRole;
+import com.example.participant.exception.ParticipantErrorCode;
 import com.example.participant.repository.ParticipantRepository;
 import com.example.study.converter.StudyConverter;
 import com.example.study.dto.request.CreateStudyReqDto;
 import com.example.study.dto.request.UpdateStudyReqDto;
 import com.example.study.dto.response.StudyInfoResDto;
+import com.example.study.dto.response.UpdateStudyLeaderResDto;
 import com.example.study.entity.Study;
 import com.example.study.entity.enums.StudyStatus;
 import com.example.study.exception.StudyErrorCode;
@@ -57,7 +59,7 @@ public class StudyServiceImpl implements StudyService {
 		Study study = studyRepository.findById(studyId)
 				.orElseThrow(() -> new GeneralException(StudyErrorCode.STUDY_NOT_FOUND));
 		
-		// 수정하려는 Study 의 스터디장인 경우에만 수정 가능 (존재하지 않는 memrberId인 경우에도 차단됨)
+		// 수정하려는 Study 의 스터디장인 경우에만 수정 가능 (존재하지 않는 memberId인 경우에도 차단됨)
 		if (!participantRepository.existsByStudyIdAndMemberIdAndRole(studyId, memberId, StudyRole.LEADER)) {
 			throw new GeneralException(CommonErrorCode.FORBIDDEN);
 		}
@@ -73,12 +75,30 @@ public class StudyServiceImpl implements StudyService {
 		Study study = studyRepository.findById(studyId)
 				.orElseThrow(() -> new GeneralException(StudyErrorCode.STUDY_NOT_FOUND));
 		
-		// 수정하려는 Study 의 스터디장인 경우에만 수정 가능 (존재하지 않는 memrberId인 경우에도 차단됨)
+		// 수정하려는 Study 의 스터디장인 경우에만 수정 가능 (존재하지 않는 memberId인 경우에도 차단됨)
 		if (!participantRepository.existsByStudyIdAndMemberIdAndRole(studyId, memberId, StudyRole.LEADER)) {
 			throw new GeneralException(CommonErrorCode.FORBIDDEN);
 		}
 		study.updateStatus(status);
 		return StudyConverter.toStudyInfoResDto(study);
+	}
+	
+	@Override
+	@Transactional
+	// 스터디장 변경 (위임)
+	public UpdateStudyLeaderResDto updateStudyLeader(Long memberId, Long studyId, Long newLeaderId) {
+		// 해당 Study 의 스터디장인 경우에만 위임 가능
+		Participant currentLeader = participantRepository.findByStudyIdAndMemberId(studyId, memberId)
+	            .filter(p -> p.getRole() == StudyRole.LEADER)
+	            .orElseThrow(() -> new GeneralException(CommonErrorCode.FORBIDDEN));
+		// newLeaderId 가 현재 Study 에 속하는 memberId 여야 함 (DTO 변환을 위해서 Member Fetch join)
+		Participant newLeader = participantRepository.findByStudyIdAndMemberIdFetchJoinMember(studyId, newLeaderId)
+				.orElseThrow(() -> new GeneralException(ParticipantErrorCode.PARTICIPANT_NOT_FOUND));
+		
+		// 원래 스터디장(현재 유저)을 MEMBER 로 변경한 후, 새로운 newLeader를 LEADER 로 변경
+		currentLeader.updateRole(StudyRole.MEMBER);
+	    newLeader.updateRole(StudyRole.LEADER);
+		return StudyConverter.toUpdateStudyLeaderResDto(newLeader);
 	}
 
 	@Override
@@ -88,7 +108,7 @@ public class StudyServiceImpl implements StudyService {
 		Study study = studyRepository.findById(studyId)
 				.orElseThrow(() -> new GeneralException(StudyErrorCode.STUDY_NOT_FOUND));
 		
-		// 수정하려는 Study 의 스터디장인 경우에만 수정 가능 (존재하지 않는 memrberId인 경우에도 차단됨)
+		// 수정하려는 Study 의 스터디장인 경우에만 수정 가능 (존재하지 않는 memberId인 경우에도 차단됨)
 		if (!participantRepository.existsByStudyIdAndMemberIdAndRole(studyId, memberId, StudyRole.LEADER)) {
 			throw new GeneralException(CommonErrorCode.FORBIDDEN);
 		}
