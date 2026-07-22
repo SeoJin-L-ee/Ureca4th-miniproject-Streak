@@ -34,7 +34,7 @@ public class StudyController {
 			@CurrentUser MemberPrincipal principal,
 			@RequestBody CreateStudyReqDto reqDto
 	) {
-		StudyInfoResDto resDto = studyService.createStudy(principal.getMemberId(), reqDto);
+		StudyInfoResDto resDto = studyService.createStudy(principal.memberId(), reqDto);
 		return CustomResponse.onSuccess(HttpStatus.CREATED, resDto);
 	}
 	
@@ -45,7 +45,7 @@ public class StudyController {
 			@PathVariable("studyId") Long studyId,
 			@RequestBody UpdateStudyReqDto reqDto
 	) {
-		StudyInfoResDto resDto = studyService.updateStudy(principal.getMemberId(), studyId, reqDto);
+		StudyInfoResDto resDto = studyService.updateStudy(principal.memberId(), studyId, reqDto);
 		return CustomResponse.onSuccess(resDto);
 	}
 	
@@ -56,7 +56,7 @@ public class StudyController {
 			@PathVariable("studyId") Long studyId,
 			@RequestParam("status") StudyStatus status
 	) {
-		StudyInfoResDto resDto = studyService.updateStudyStatus(principal.getMemberId(), studyId, status);
+		StudyInfoResDto resDto = studyService.updateStudyStatus(principal.memberId(), studyId, status);
 		return CustomResponse.onSuccess(resDto);
 	}
 	
@@ -66,7 +66,7 @@ public class StudyController {
 			@CurrentUser MemberPrincipal principal,
 			@PathVariable("studyId") Long studyId
 	) {
-		studyService.softDeleteStudy(principal.getMemberId(), studyId);
+		studyService.softDeleteStudy(principal.memberId(), studyId);
 		return CustomResponse.onSuccess(null);
 	}
 	
