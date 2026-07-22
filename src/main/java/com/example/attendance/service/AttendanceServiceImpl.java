@@ -59,8 +59,8 @@ public class AttendanceServiceImpl implements AttendanceService {
 						.map(participant -> {
 							long mId = participant.getMember().getId();
 							
-							int attendedCount = attendanceRepository.countBySession_Study_IdAndMember_IdAndStatus(studyId, mId, AttendanceStatus.PRESENT);
-							int absentCount = attendanceRepository.countBySession_Study_IdAndMember_IdAndStatus(studyId, mId, AttendanceStatus.ABSENT);
+							int attendedCount = attendanceRepository.countBySessionStudyIdAndMemberIdAndStatus(studyId, mId, AttendanceStatus.PRESENT);
+							int absentCount = attendanceRepository.countBySessionStudyIdAndMemberIdAndStatus(studyId, mId, AttendanceStatus.ABSENT);
 							int total = attendedCount + absentCount;
 							
 							double rate = (total == 0) ? 0.0 : Math.round(((double) attendedCount / total * 100) * 10) / 10.0;
