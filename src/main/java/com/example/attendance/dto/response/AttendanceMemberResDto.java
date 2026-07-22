@@ -1,6 +1,6 @@
 package com.example.attendance.dto.response;
 
-// 개별 참여자 정보를 보여주는 응답 DTO 
+// 개별 참여자 정보를 보여주는 응답 DTO - 참여자별 출석 현황 보여주기 위함 
 // AttendanceListResDto 내부에서 사용 
 public record AttendanceMemberResDto(
 	Long memberId,

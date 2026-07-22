@@ -2,7 +2,7 @@ package com.example.attendance.dto.response;
 
 import java.util.List;
 
-// 스터디에 참여한 모든 member의 출석 정보를 보여주는 DTO 
+// 스터디에 참여한 모든 member의 출석 현황을 보여주는 DTO 
 public record AttendanceListResDto(
 	Long studyId,
 	

@@ -2,12 +2,15 @@ package com.example.attendance.service;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
+import static org.assertj.core.api.Assertions.tuple;
 
 import java.time.LocalDateTime;
+import java.util.List;
 
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.MethodOrderer;
+import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Order;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.TestMethodOrder;
@@ -17,6 +20,8 @@ import org.springframework.transaction.annotation.Transactional;
 
 import com.example.attendance.dto.response.AttendanceListResDto;
 import com.example.attendance.dto.response.AttendanceMemberResDto;
+import com.example.attendance.dto.response.AttendanceParticipantResDto;
+import com.example.attendance.dto.response.AttendanceSessionResDto;
 import com.example.attendance.entity.Attendance;
 import com.example.attendance.entity.enums.AttendanceStatus;
 import com.example.attendance.repository.AttendanceRepository;
@@ -218,5 +223,87 @@ public class AttendanceServiceImplTest {
         assertThat(result.members()).hasSize(1);
         assertThat(result.members().get(0).attendanceRate()).isEqualTo(0.0);
         assertThat(result.averageAttendanceRate()).isEqualTo(0.0);
+    }
+    
+    @Order(4)
+    @Nested
+    @DisplayName("회차별 참여자 출석 목록 조회 테스트")
+    class GetSessionAttendancesTest {
+
+        @Test
+        @DisplayName("성공: 스터디장은 회차별 참여자 출석 목록을 조회할 수 있다.")
+        void getSessionAttendances_Success() {
+            // given
+        	// member1을 LEADER로 설정 
+        	participantRepository.save(
+        		Participant.builder()
+        				.study(study)
+        				.member(member1)
+                        .role(StudyRole.LEADER)
+                        .build()
+            );
+        	
+        	// member2를 일반 MEMBER로 등록
+            participantRepository.save(
+            	Participant.builder()
+            			.study(study)
+                        .member(member2)
+                        .role(StudyRole.MEMBER)
+                        .build()
+            );
+            
+            attendanceRepository.save(
+            	Attendance.builder()
+            			.session(session1)
+            			.member(member2)
+            			.status(AttendanceStatus.PRESENT)
+            			.build()
+            );
+
+            // when
+            AttendanceSessionResDto result = attendanceService.getSessionAttendances(
+                    study.getId(), 
+                    session1.getId(), 
+                    member1.getId()
+            );
+
+            // then
+            assertThat(result).isNotNull();
+            assertThat(result.sessionId()).isEqualTo(session1.getId());
+            
+            // 참여자 2명(member1, member2) 확인
+            List<AttendanceParticipantResDto> participants = result.participants();
+            assertThat(participants).hasSize(2);
+
+            // 개별 출석 상태 매핑 검증
+            assertThat(participants)
+                    .extracting("memberId", "status")
+                    .containsExactlyInAnyOrder(
+                            tuple(member1.getId(), null),                      // 출석 정보 없음 (null)
+                            tuple(member2.getId(), AttendanceStatus.PRESENT)   // 출석 (PRESENT)
+                    );
+        }
+
+        @Test
+        @DisplayName("실패: 스터디장이 아닌 스터디원이 조회 시 예외가 발생한다.")
+        void getSessionAttendances_Forbidden_NotLeader() {
+        	
+        	// given - member2는 LEADER가 아닌 MEMBER로 등록
+        	participantRepository.save(
+                    Participant.builder()
+                            .study(study)
+                            .member(member2)
+                            .role(StudyRole.MEMBER)
+                            .build()
+            );
+        	
+            // when & then (MEMBER인 member2가 요청 시 예외 발생)
+            assertThatThrownBy(() -> attendanceService.getSessionAttendances(
+                    study.getId(), 
+                    session1.getId(), 
+                    member2.getId()
+            ))
+            .isInstanceOf(GeneralException.class);
+        }
     }
 }

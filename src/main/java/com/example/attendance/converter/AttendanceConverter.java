@@ -1,9 +1,13 @@
 package com.example.attendance.converter;
 
 import java.util.List;
+import java.util.Map;
 
 import com.example.attendance.dto.response.AttendanceListResDto;
 import com.example.attendance.dto.response.AttendanceMemberResDto;
+import com.example.attendance.dto.response.AttendanceParticipantResDto;
+import com.example.attendance.entity.enums.AttendanceStatus;
+import com.example.member.entity.Member;
 import com.example.participant.entity.Participant;
 
 public class AttendanceConverter {
@@ -33,6 +37,18 @@ public class AttendanceConverter {
 				totalAvgRate,
 				memberResDtos
 		);
+	}
+	
+	// AttendanceParticipantResDto 생성 
+	public static AttendanceParticipantResDto toAttendanceParticipantResDto(
+			Member member, 
+			AttendanceStatus status
+	) {
+		return new AttendanceParticipantResDto(
+                member.getId(),
+                member.getName(),
+                status
+        );
 	}
 	
 }

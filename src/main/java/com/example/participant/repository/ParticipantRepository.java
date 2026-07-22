@@ -3,7 +3,10 @@ package com.example.participant.repository;
 import java.util.List;
 
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.Query;
+import org.springframework.data.repository.query.Param;
 
+import com.example.member.entity.Member;
 import com.example.participant.entity.Participant;
 import com.example.participant.entity.enums.StudyRole;
 
@@ -17,4 +20,7 @@ public interface ParticipantRepository extends JpaRepository<Participant, Long> 
 	
 	// 스터디에 참여한 모든 member 조회 
 	List<Participant> findAllByStudyId(Long studyId);
+	
+	@Query("SELECT p.member FROM Participant p WHERE p.study.id = :studyId")
+	List<Member> findMembersByStudyId(@Param("studyId") Long studyId);
 }
