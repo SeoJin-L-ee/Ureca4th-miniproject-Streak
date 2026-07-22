@@ -32,6 +32,7 @@ import com.example.study.exception.code.StudyErrorCode;
 import com.example.study.repository.StudyRepository;
 import com.example.submission.repository.SubmissionRepository;
 
+import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 
 @Service
@@ -48,6 +49,7 @@ public class SessionServiceImpl implements SessionService {
 	
 	// 스터디 회차 생성 
 	@Override
+	@Transactional
 	public SessionResDto createSession(long studyId, long memberId, CreateSessionReqDto reqDto) {
 		Study study = studyRepository.findById(studyId)
 				.orElseThrow(() -> new GeneralException(StudyErrorCode.STUDY_NOT_FOUND));
@@ -66,6 +68,7 @@ public class SessionServiceImpl implements SessionService {
 	
 	// 스터디 회차 수정 
 	@Override
+	@Transactional
 	public SessionResDto updateSession(long studyId, long sessionId, long memberId, UpdateSessionReqDto reqDto) {
 		
 		// LEADER 로 등록된 Member만 스터디 회차를 생성할 수 있도록 검증 
@@ -90,6 +93,7 @@ public class SessionServiceImpl implements SessionService {
 	
 	// 스터디 회차 삭제 
 	@Override
+	@Transactional
 	public void deleteSession(long studyId, long sessionId, long memberId) {
 		
 		// LEADER 로 등록된 Member만 스터디 회차를 생성할 수 있도록 검증

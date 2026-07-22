@@ -1,4 +1,4 @@
-package com.example.session;
+package com.example.session.service;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
@@ -34,7 +34,6 @@ import com.example.session.dto.response.SessionListResDto;
 import com.example.session.dto.response.SessionResDto;
 import com.example.session.entity.Session;
 import com.example.session.repository.SessionRepository;
-import com.example.session.service.SessionServiceImpl;
 import com.example.study.entity.Study;
 import com.example.study.entity.enums.StudyCategory;
 import com.example.study.entity.enums.StudyStatus;
