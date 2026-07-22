@@ -1,0 +1,37 @@
+package com.example.assignment.controller;
+
+import org.springframework.http.HttpStatus;
+import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RestController;
+
+import com.example.assignment.dto.request.CreateAssignmentReqDto;
+import com.example.assignment.dto.response.AssignmentInfoResDto;
+import com.example.assignment.service.AssignmentService;
+import com.example.global.common.CustomResponse;
+import com.example.global.security.CurrentUser;
+import com.example.global.security.MemberPrincipal;
+
+import lombok.RequiredArgsConstructor;
+
+@RestController
+@RequestMapping("/api")
+@RequiredArgsConstructor
+public class AssignmentController {
+	
+	private final AssignmentService assignmentService;
+	
+	// 과제 생성 
+	@PostMapping("/studies/{studyId}/sessions/{sessionId}/assignments")
+	public CustomResponse<AssignmentInfoResDto> createAssignment(
+			@PathVariable("studyId") Long studyId,
+			@PathVariable("sessionId") Long sessionId,
+			@CurrentUser MemberPrincipal principal,
+			@RequestBody CreateAssignmentReqDto reqDto
+	){
+		AssignmentInfoResDto resDto = assignmentService.createAssignment(studyId, sessionId, principal.memberId(), reqDto);
+		return CustomResponse.onSuccess(HttpStatus.CREATED, resDto);
+	}
+}

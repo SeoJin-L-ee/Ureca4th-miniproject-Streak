@@ -1,6 +1,7 @@
 package com.example.session.repository;
 
 import java.util.List;
+import java.util.Optional;
 
 import org.springframework.data.jpa.repository.JpaRepository;
 
@@ -18,4 +19,7 @@ public interface SessionRepository extends JpaRepository<Session, Long>{
 	
 	// 해당 스터디에 존재하는 회차인지 검증 
 	boolean existsByIdAndStudyId(Long sessionId, Long studyId);
+	
+	// 해당 스터디에 존재하는 회차 가져오기 
+	Optional<Session> findByIdAndStudyId(Long sessionId, Long studyId);
 }

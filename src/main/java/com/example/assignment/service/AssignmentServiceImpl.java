@@ -1,0 +1,49 @@
+package com.example.assignment.service;
+
+import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
+
+import com.example.assignment.converter.AssignmentConverter;
+import com.example.assignment.dto.request.CreateAssignmentReqDto;
+import com.example.assignment.dto.response.AssignmentInfoResDto;
+import com.example.assignment.entity.Assignment;
+import com.example.assignment.repository.AssignmentRepository;
+import com.example.global.common.code.CommonErrorCode;
+import com.example.global.common.exception.GeneralException;
+import com.example.participant.entity.enums.StudyRole;
+import com.example.participant.repository.ParticipantRepository;
+import com.example.session.entity.Session;
+import com.example.session.exception.code.SessionErrorCode;
+import com.example.session.repository.SessionRepository;
+
+import lombok.RequiredArgsConstructor;
+
+@Service
+@RequiredArgsConstructor
+public class AssignmentServiceImpl implements AssignmentService {
+	
+	private final AssignmentRepository assignmentRepository;
+	private final ParticipantRepository participantRepository;
+	private final SessionRepository sessionRepository;
+	
+	// 스터디장만 과제 생성 가능 
+	@Override
+	@Transactional
+	public AssignmentInfoResDto createAssignment(Long studyId, Long sessionId, Long memberId, CreateAssignmentReqDto reqDto) {
+		
+		// LEADER 로 등록된 Member만 스터디 회차를 생성할 수 있도록 검증
+		if (!participantRepository.existsByStudyIdAndMemberIdAndRole(studyId, memberId, StudyRole.LEADER)) {
+			throw new GeneralException(CommonErrorCode.FORBIDDEN);
+		}
+
+		// 해당 스터디에 속한 회차 존재 여부 검증 
+		Session session = sessionRepository.findByIdAndStudyId(sessionId, studyId)
+				.orElseThrow(() -> new GeneralException(SessionErrorCode.NOT_STUDY_SESSION));
+		
+		Assignment assignment = AssignmentConverter.toAssignment(session, reqDto);
+		Assignment savedAssignment = assignmentRepository.save(assignment);
+		
+		return AssignmentConverter.toAssignmentInfoResDto(savedAssignment);
+	}
+	
+}
