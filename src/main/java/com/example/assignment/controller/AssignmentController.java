@@ -13,6 +13,7 @@ import org.springframework.web.bind.annotation.RestController;
 import com.example.assignment.dto.request.CreateAssignmentReqDto;
 import com.example.assignment.dto.request.UpdateAssignmentReqDto;
 import com.example.assignment.dto.response.AssignmentInfoResDto;
+import com.example.assignment.dto.response.AssignmentListResDto;
 import com.example.assignment.service.AssignmentService;
 import com.example.global.common.CustomResponse;
 import com.example.global.security.CurrentUser;
@@ -65,7 +66,7 @@ public class AssignmentController {
 	}
 	
 	// 과제 상세 조회 
-	@GetMapping("/api/studies/{studyId}/sessions/{sessionId}/assignments/{assignmentId}")
+	@GetMapping("/studies/{studyId}/sessions/{sessionId}/assignments/{assignmentId}")
 	public CustomResponse<AssignmentInfoResDto> detailAssignment(
 			@PathVariable("studyId") Long studyId,
 			@PathVariable("sessionId") Long sessionId,
@@ -73,6 +74,17 @@ public class AssignmentController {
 			@CurrentUser MemberPrincipal principal
 	){
 		AssignmentInfoResDto resDto = assignmentService.detailAssignment(studyId, sessionId, assignmentId, principal.memberId());
+		return CustomResponse.onSuccess(resDto);
+	}
+	
+	// 회차별 과제 목록 조회
+	@GetMapping("/studies/{studyId}/sessions/{sessionId}/assignments")
+	public CustomResponse<AssignmentListResDto> listAssignment(
+			@PathVariable("studyId") Long studyId,
+			@PathVariable("sessionId") Long sessionId,
+			@CurrentUser MemberPrincipal principal
+	){
+		AssignmentListResDto resDto = assignmentService.listAssignment(studyId, sessionId, principal.memberId());
 		return CustomResponse.onSuccess(resDto);
 	}
 }

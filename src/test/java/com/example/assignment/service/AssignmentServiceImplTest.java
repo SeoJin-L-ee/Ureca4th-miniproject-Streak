@@ -16,6 +16,7 @@ import org.springframework.transaction.annotation.Transactional;
 import com.example.assignment.dto.request.CreateAssignmentReqDto;
 import com.example.assignment.dto.request.UpdateAssignmentReqDto;
 import com.example.assignment.dto.response.AssignmentInfoResDto;
+import com.example.assignment.dto.response.AssignmentListResDto;
 import com.example.assignment.entity.Assignment;
 import com.example.assignment.repository.AssignmentRepository;
 import com.example.global.common.exception.GeneralException;
@@ -496,6 +497,121 @@ public class AssignmentServiceImplTest {
                     leaderMember.getId()
             ))
             .isInstanceOf(GeneralException.class);
+        }
+    }
+    
+    
+    
+    @Nested
+    @DisplayName("회차별 과제 목록 조회 (listAssignment)")
+    class ListAssignment {
+
+        @BeforeEach
+        void setUpAssignments() {
+        	
+            assignmentRepository.save(
+                    Assignment.builder()
+                            .session(session)
+                            .title("1번 과제")
+                            .description("1번 과제 설명")
+                            .dueAt(LocalDateTime.of(2026, 7, 20, 23, 59))
+                            .build()
+            );
+
+            assignmentRepository.save(
+                    Assignment.builder()
+                            .session(session)
+                            .title("2번 과제")
+                            .description("2번 과제 설명")
+                            .dueAt(LocalDateTime.of(2026, 7, 25, 23, 59))
+                            .build()
+            );
+        }
+
+        @Test
+        @DisplayName("성공: 스터디 참여자가 목록 조회를 요청하면 해당 회차의 과제 목록을 정상 반환한다.")
+        void listAssignment_Success() {
+        	
+            // when
+            AssignmentListResDto response = assignmentService.listAssignment(
+                    study.getId(),
+                    session.getId(),
+                    leaderMember.getId()
+            );
+
+            // then
+            assertThat(response).isNotNull();
+            assertThat(response.sessionId()).isEqualTo(session.getId());
+            assertThat(response.assignments()).hasSize(2);
+            assertThat(response.assignments())
+                    .extracting("title")
+                    .containsExactly("1번 과제", "2번 과제");
+        }
+
+        @Test
+        @DisplayName("성공: 과제가 없는 회차일 경우 빈 리스트를 반환한다.")
+        void listAssignment_Success_EmptyList() {
+        	
+            // given
+            Session emptySession = sessionRepository.save(
+                    Session.builder()
+                            .study(study)
+                            .sessionNumber(2)
+                            .title("2회차 세션")
+                            .content("내용")
+                            .startsAt(LocalDateTime.of(2026, 7, 17, 14, 0))
+                            .build()
+            );
+
+            // when
+            AssignmentListResDto response = assignmentService.listAssignment(
+                    study.getId(),
+                    emptySession.getId(),
+                    leaderMember.getId()
+            );
+
+            // then
+            assertThat(response).isNotNull();
+            assertThat(response.sessionId()).isEqualTo(emptySession.getId());
+            assertThat(response.assignments()).isEmpty();
+        }
+
+        @Test
+        @DisplayName("실패: 스터디 미참여자가 목록 조회를 요청할 경우 예외가 발생한다.")
+        void listAssignment_Fail_Forbidden() {
+        	
+            // given 
+            Member nonParticipant = memberRepository.save(
+                    Member.builder()
+                            .email("outsider@example.com")
+                            .name("외부인")
+                            .password("password123")
+                            .phone("010-9999-9999")
+                            .status(MemberStatus.ACTIVE)
+                            .build()
+            );
+
+            // when & then
+            assertThatThrownBy(() -> assignmentService.listAssignment(
+                    study.getId(),
+                    session.getId(),
+                    nonParticipant.getId()
+            )).isInstanceOf(GeneralException.class);
+        }
+
+        @Test
+        @DisplayName("실패: 해당 스터디에 속하지 않는 회차 ID로 요청할 경우 예외가 발생한다.")
+        void listAssignment_Fail_InvalidSession() {
+        	
+            // given
+            Long invalidSessionId = 9999L;
+
+            // when & then
+            assertThatThrownBy(() -> assignmentService.listAssignment(
+                    study.getId(),
+                    invalidSessionId,
+                    leaderMember.getId()
+            )).isInstanceOf(GeneralException.class);
         }
     }
 }

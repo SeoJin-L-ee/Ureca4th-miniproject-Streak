@@ -1,5 +1,7 @@
 package com.example.assignment.service;
 
+import java.util.List;
+
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -7,6 +9,7 @@ import com.example.assignment.converter.AssignmentConverter;
 import com.example.assignment.dto.request.CreateAssignmentReqDto;
 import com.example.assignment.dto.request.UpdateAssignmentReqDto;
 import com.example.assignment.dto.response.AssignmentInfoResDto;
+import com.example.assignment.dto.response.AssignmentListResDto;
 import com.example.assignment.entity.Assignment;
 import com.example.assignment.exception.AssignmentErrorCode;
 import com.example.assignment.repository.AssignmentRepository;
@@ -107,6 +110,24 @@ public class AssignmentServiceImpl implements AssignmentService {
 				.orElseThrow(() -> new GeneralException(AssignmentErrorCode.ASSIGNMENT_NOT_FOUND));
 		
 		return AssignmentConverter.toAssignmentInfoResDto(assignment);
+	}
+
+	// 과제 목록 조회 - 해당 스터디 참여자만 조회 가능 
+	@Override
+	public AssignmentListResDto listAssignment(Long studyId, Long sessionId, Long memberId) {
+		
+		// 해당 Study 에 참여한 Member만 스터디 회차를 조회할 수 있도록 검증 
+		if (!participantRepository.existsByStudyIdAndMemberId(studyId, memberId)) {
+			throw new GeneralException(CommonErrorCode.FORBIDDEN);
+		}
+
+		// 해당 회차가 해당 스터디 소속인지 검증
+		if (!sessionRepository.existsByIdAndStudyId(sessionId, studyId))
+			throw new GeneralException(SessionErrorCode.NOT_STUDY_SESSION);
+		
+		List<Assignment> assignments = assignmentRepository.findAllBySessionId(sessionId);
+
+		return AssignmentConverter.toAssignmentListResDto(sessionId, assignments);
 	}
 	
 }
