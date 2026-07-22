@@ -21,17 +21,6 @@ public class AttendanceController {
 
 	private final AttendanceService attendanceService;
 	
-	// 스터디 내 참여자별 출석 현황 조회 - 로직만 필요. 이후에 지우기 
-	@GetMapping("/studies/{studyId}/attendances")
-	public CustomResponse<AttendanceListResDto> getMemberAttendances(
-			@PathVariable("studyId") Integer studyId,
-			@CurrentUser MemberPrincipal principal
-	){
-		AttendanceListResDto resDto = attendanceService.getMemberAttendances(studyId, principal.memberId());
-		return CustomResponse.onSuccess(resDto);
-	}
-	
-	
 	// 회차별 참여자 출석 목록 조회 - 출석 체크용  
 	@GetMapping("/studies/{studyId}/sessions/{sessionId}/attendances")
 	public CustomResponse<AttendanceSessionResDto> getSessionAttendances(
