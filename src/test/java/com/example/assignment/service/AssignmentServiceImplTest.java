@@ -149,6 +149,7 @@ public class AssignmentServiceImplTest {
             assertThat(response).isNotNull();
             assertThat(response.assignmentId()).isNotNull();
             assertThat(response.sessionId()).isEqualTo(session.getId());
+            assertThat(response.sessionNumber()).isEqualTo(session.getSessionNumber());
             assertThat(response.title()).isEqualTo("DFS 백준 3문제 풀이");
             assertThat(response.description()).isEqualTo("1회차 세션 관련 문제 풀이 과제입니다.");
             assertThat(response.dueAt()).isEqualTo(LocalDateTime.of(2026, 7, 15, 23, 59));
@@ -248,6 +249,7 @@ public class AssignmentServiceImplTest {
             // 응답 DTO 검증
             assertThat(response).isNotNull();
             assertThat(response.assignmentId()).isEqualTo(assignment.getId());
+            assertThat(response.sessionNumber()).isEqualTo(session.getSessionNumber());
             assertThat(response.title()).isEqualTo("수정된 과제 제목");
             assertThat(response.description()).isEqualTo("수정된 과제 설명");
             assertThat(response.dueAt()).isEqualTo(LocalDateTime.of(2026, 7, 20, 23, 59));
@@ -391,6 +393,109 @@ public class AssignmentServiceImplTest {
                     invalidAssignmentId,
                     leaderMember.getId()
             )).isInstanceOf(GeneralException.class);
+        }
+    }
+    
+    
+    @Nested
+    @DisplayName("과제 상세 조회 (detailAssignment)")
+    class DetailAssignment {
+
+        private Assignment assignment;
+
+        @BeforeEach
+        void setUpAssignment() {
+        	
+        	// 상세 조회를 위한 테스트용 과제 생성
+        	assignment = assignmentRepository.save(
+                    Assignment.builder()
+                            .session(session)
+                            .title("과제 상세 조회 테스트")
+                            .description("상세 설명 내용입니다.")
+                            .dueAt(LocalDateTime.of(2026, 7, 25, 23, 59))
+                            .build()
+            );
+        }
+
+        @Test
+        @DisplayName("성공: 스터디 참여자가 과제 상세 조회를 요청하면 과제 정보를 정상 반환한다.")
+        void detailAssignment_Success() {
+        	
+            // when (스터디장 또는 팀원으로 요청)
+            AssignmentInfoResDto response = assignmentService.detailAssignment(
+                    study.getId(),
+                    session.getId(),
+                    assignment.getId(),
+                    leaderMember.getId()
+            );
+
+            // then
+            assertThat(response).isNotNull();
+            assertThat(response.assignmentId()).isEqualTo(assignment.getId());
+            assertThat(response.sessionId()).isEqualTo(session.getId());
+            assertThat(response.sessionNumber()).isEqualTo(session.getSessionNumber());
+            assertThat(response.title()).isEqualTo("과제 상세 조회 테스트");
+            assertThat(response.description()).isEqualTo("상세 설명 내용입니다.");
+            assertThat(response.dueAt()).isEqualTo(LocalDateTime.of(2026, 7, 25, 23, 59));
+        }
+
+        @Test
+        @DisplayName("실패: 스터디 미참여자가 조회를 요청할 경우 예외가 발생한다.")
+        void detailAssignment_Fail_Forbidden() {
+        	
+            // given (스터디 미참여자 생성)
+            Member nonParticipant = memberRepository.save(
+                    Member.builder()
+                            .email("outsider@example.com")
+                            .name("외부인")
+                            .password("password123")
+                            .phone("010-9999-9999")
+                            .status(MemberStatus.ACTIVE)
+                            .build()
+            );
+
+            // when & then
+            assertThatThrownBy(() -> assignmentService.detailAssignment(
+                    study.getId(),
+                    session.getId(),
+                    assignment.getId(),
+                    nonParticipant.getId()
+            ))
+            .isInstanceOf(GeneralException.class);
+        }
+
+        @Test
+        @DisplayName("실패: 해당 스터디 소속이 아닌 회차 ID로 조회 시 예외가 발생한다.")
+        void detailAssignment_Fail_InvalidSession() {
+            
+        	// given
+            Long invalidSessionId = 9999L;
+
+            // when & then
+            assertThatThrownBy(() -> assignmentService.detailAssignment(
+                    study.getId(),
+                    invalidSessionId,
+                    assignment.getId(),
+                    leaderMember.getId()
+            ))
+            .isInstanceOf(GeneralException.class);
+        }
+
+        @Test
+        @DisplayName("실패: 해당 회차에 속하지 않거나 존재하지 않는 과제 ID 조회 시 예외가 발생한다.")
+        void detailAssignment_Fail_NotFoundAssignment() {
+            
+        	// given
+            Long invalidAssignmentId = 8888L;
+
+            // when & then
+            assertThatThrownBy(() -> assignmentService.detailAssignment(
+                    study.getId(),
+                    session.getId(),
+                    invalidAssignmentId,
+                    leaderMember.getId()
+            ))
+            .isInstanceOf(GeneralException.class);
         }
     }
 }

@@ -14,4 +14,7 @@ public interface AssignmentService {
 	
 	// 과제 삭제 - 스터디장만 가능 
 	void deleteAssignment(Long studyId, Long sessionId, Long assignmentId, Long memberId);
+	
+	// 과제 상세 조회 
+	AssignmentInfoResDto detailAssignment(Long studyId, Long sessionId, Long assignmentId, Long memberId);
 }

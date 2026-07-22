@@ -2,6 +2,7 @@ package com.example.assignment.controller;
 
 import org.springframework.http.HttpStatus;
 import org.springframework.web.bind.annotation.DeleteMapping;
+import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PatchMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -61,5 +62,17 @@ public class AssignmentController {
 	){
 		assignmentService.deleteAssignment(studyId, sessionId, assignmentId, principal.memberId());
 		return CustomResponse.onSuccess(null);
+	}
+	
+	// 과제 상세 조회 
+	@GetMapping("/api/studies/{studyId}/sessions/{sessionId}/assignments/{assignmentId}")
+	public CustomResponse<AssignmentInfoResDto> detailAssignment(
+			@PathVariable("studyId") Long studyId,
+			@PathVariable("sessionId") Long sessionId,
+			@PathVariable("assignmentId") Long assignmentId,
+			@CurrentUser MemberPrincipal principal
+	){
+		AssignmentInfoResDto resDto = assignmentService.detailAssignment(studyId, sessionId, assignmentId, principal.memberId());
+		return CustomResponse.onSuccess(resDto);
 	}
 }

@@ -24,6 +24,7 @@ public class AssignmentConverter {
 		return new AssignmentInfoResDto(
 				assignment.getId(),
 				assignment.getSession().getId(),
+				assignment.getSession().getSessionNumber(),
 				assignment.getTitle(),
 				assignment.getDescription(),
 				assignment.getDueAt()

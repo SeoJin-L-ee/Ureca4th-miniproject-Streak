@@ -89,5 +89,24 @@ public class AssignmentServiceImpl implements AssignmentService {
 		
 		assignmentRepository.delete(assignment);
 	}
+
+	// 과제 상세 조회 - 해당 스터디 참여자만 조회 가능 
+	@Override
+	public AssignmentInfoResDto detailAssignment(Long studyId, Long sessionId, Long assignmentId, Long memberId) {
+		
+		// 해당 Study 에 참여한 Member만 스터디 회차를 조회할 수 있도록 검증 
+		if (!participantRepository.existsByStudyIdAndMemberId(studyId, memberId)) {
+			throw new GeneralException(CommonErrorCode.FORBIDDEN);
+		}
+		
+		// 해당 회차가 해당 스터디 소속인지 검증 
+		if(!sessionRepository.existsByIdAndStudyId(sessionId, studyId)) throw new GeneralException(SessionErrorCode.NOT_STUDY_SESSION);
+			
+		// 과제 존재 및 해당 회차 소속 여부 검증 
+		Assignment assignment = assignmentRepository.findByIdAndSessionId(assignmentId, sessionId)
+				.orElseThrow(() -> new GeneralException(AssignmentErrorCode.ASSIGNMENT_NOT_FOUND));
+		
+		return AssignmentConverter.toAssignmentInfoResDto(assignment);
+	}
 	
 }

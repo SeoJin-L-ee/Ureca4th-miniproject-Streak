@@ -6,6 +6,7 @@ import java.time.LocalDateTime;
 public record AssignmentInfoResDto(
 	Long assignmentId,
 	Long sessionId,
+	int sessionNumber,
 	String title,
 	String description,
 	LocalDateTime dueAt
