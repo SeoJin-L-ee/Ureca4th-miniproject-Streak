@@ -61,4 +61,15 @@ public class Member extends BaseEntity {
 	                .status(MemberStatus.ACTIVE)
 	                .build();
     }
+    
+    //updateProfile과 changePassword는 마이페이지의 내 정보 수정을 위한 것
+    public void updateProfile(String name, String phone) {
+        this.name = name;
+        this.phone = phone;
+    }
+
+    //인코딩(암호화)된 비밀번호만 저장
+    public void changePassword(String encodedNewPassword) {
+        this.password = encodedNewPassword;
+    }
 }

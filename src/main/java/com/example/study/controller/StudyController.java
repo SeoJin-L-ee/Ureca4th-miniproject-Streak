@@ -60,7 +60,7 @@ public class StudyController {
 		StudyInfoResDto resDto = studyService.updateStudyStatus(principal.memberId(), studyId, status);
 		return CustomResponse.onSuccess(resDto);
 	}
-	
+
 	@PatchMapping("{studyId}/leader")
 	// 스터디장 변경 (위임)
 	public CustomResponse<UpdateStudyLeaderResDto> updateStudyLeader(

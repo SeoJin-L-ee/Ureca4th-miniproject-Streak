@@ -16,13 +16,12 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
-import com.example.auth.dto.request.LoginRequest;
-import com.example.auth.dto.request.SignUpRequest;
-import com.example.auth.dto.response.CsrfResponse;
-import com.example.auth.dto.response.MemberResponse;
+import com.example.auth.dto.request.LoginReqDto;
+import com.example.auth.dto.request.SignUpReqDto;
+import com.example.auth.dto.response.AuthResDto;
+import com.example.auth.dto.response.CsrfResDto;
 import com.example.auth.service.AuthService;
 import com.example.global.common.CustomResponse;
-import com.example.global.security.CurrentUser;
 import com.example.global.security.MemberPrincipal;
 
 import jakarta.servlet.http.HttpServletRequest;
@@ -40,20 +39,20 @@ public class AuthController {
     private final SecurityContextRepository securityContextRepository;
 
     @GetMapping("/csrf")
-    public CustomResponse<CsrfResponse> csrf(CsrfToken csrfToken) {
+    public CustomResponse<CsrfResDto> csrf(CsrfToken csrfToken) {
         //XSRF-TOKEN 발급
-        return CustomResponse.onSuccess(new CsrfResponse(csrfToken.getToken(), csrfToken.getHeaderName()));
+        return CustomResponse.onSuccess(new CsrfResDto(csrfToken.getToken(), csrfToken.getHeaderName()));
     }
 
     @PostMapping("/signup")
-    public ResponseEntity<CustomResponse<MemberResponse>> signUp(@Valid @RequestBody SignUpRequest request) {
-        MemberResponse response = authService.signUp(request);
+    public ResponseEntity<CustomResponse<AuthResDto>> signUp(@Valid @RequestBody SignUpReqDto request) {
+        AuthResDto response = authService.signUp(request);
 
         return ResponseEntity.status(HttpStatus.CREATED).body(CustomResponse.onSuccess(HttpStatus.CREATED, response));
     }
 
     @PostMapping("/login")
-    public CustomResponse<MemberResponse> login(@Valid @RequestBody LoginRequest request, HttpServletRequest servletRequest, HttpServletResponse servletResponse) {
+    public CustomResponse<AuthResDto> login(@Valid @RequestBody LoginReqDto request, HttpServletRequest servletRequest, HttpServletResponse servletResponse) {
         
     	//이메일과 비밀번호 검증
     	Authentication authentication = authenticationManager.authenticate(UsernamePasswordAuthenticationToken.unauthenticated(request.email(), request.password()));
@@ -69,13 +68,7 @@ public class AuthController {
 
         MemberPrincipal principal = (MemberPrincipal) authentication.getPrincipal();
 
-        return CustomResponse.onSuccess(new MemberResponse(principal.memberId(), principal.email(), principal.name(), principal.phone()));
-    }
-
-    @GetMapping("/me")
-    public CustomResponse<MemberResponse> me(@CurrentUser MemberPrincipal principal) {
-        //인증되지 않은 사용자는 SecurityConfig에서 401 처리
-        return CustomResponse.onSuccess(new MemberResponse(principal.memberId(), principal.email(), principal.name(), principal.phone()));
+        return CustomResponse.onSuccess(new AuthResDto(principal.memberId(), principal.email(), principal.name(), principal.phone()));
     }
 
     @PostMapping("/logout")

@@ -4,8 +4,8 @@ import org.springframework.stereotype.Service;
 
 import com.example.global.common.code.CommonErrorCode;
 import com.example.global.common.exception.GeneralException;
-import com.example.member.MemberErrorCode;
 import com.example.member.entity.Member;
+import com.example.member.exception.code.MemberErrorCode;
 import com.example.member.repository.MemberRepository;
 import com.example.participant.entity.Participant;
 import com.example.participant.entity.enums.StudyRole;
