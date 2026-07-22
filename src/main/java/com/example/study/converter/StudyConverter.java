@@ -1,7 +1,9 @@
 package com.example.study.converter;
 
+import com.example.participant.entity.Participant;
 import com.example.study.dto.request.CreateStudyReqDto;
 import com.example.study.dto.response.StudyInfoResDto;
+import com.example.study.dto.response.UpdateStudyLeaderResDto;
 import com.example.study.entity.Study;
 import com.example.study.entity.enums.StudyStatus;
 
@@ -27,6 +29,15 @@ public class StudyConverter {
 				study.getCapacity(),
 				study.getCategory(),
 				study.getStatus()
+		);
+	}
+	
+	// Participant -> UpdateStudyLeaderResDto
+	public static UpdateStudyLeaderResDto toUpdateStudyLeaderResDto(Participant participant) {
+		return new UpdateStudyLeaderResDto(
+				participant.getStudy().getId(),
+				participant.getMember().getId(),
+				participant.getMember().getName()
 		);
 	}
 

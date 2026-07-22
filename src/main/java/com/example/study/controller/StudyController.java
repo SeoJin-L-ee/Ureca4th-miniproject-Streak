@@ -16,6 +16,7 @@ import com.example.global.security.MemberPrincipal;
 import com.example.study.dto.request.CreateStudyReqDto;
 import com.example.study.dto.request.UpdateStudyReqDto;
 import com.example.study.dto.response.StudyInfoResDto;
+import com.example.study.dto.response.UpdateStudyLeaderResDto;
 import com.example.study.entity.enums.StudyStatus;
 import com.example.study.service.StudyService;
 
@@ -57,6 +58,17 @@ public class StudyController {
 			@RequestParam("status") StudyStatus status
 	) {
 		StudyInfoResDto resDto = studyService.updateStudyStatus(principal.memberId(), studyId, status);
+		return CustomResponse.onSuccess(resDto);
+	}
+
+	@PatchMapping("{studyId}/leader")
+	// 스터디장 변경 (위임)
+	public CustomResponse<UpdateStudyLeaderResDto> updateStudyLeader(
+			@CurrentUser MemberPrincipal principal,
+			@PathVariable("studyId") Long studyId,
+			@RequestParam("newLeaderId") Long newLeaderId
+	) {
+		UpdateStudyLeaderResDto resDto = studyService.updateStudyLeader(principal.memberId(), studyId, newLeaderId);
 		return CustomResponse.onSuccess(resDto);
 	}
 	
