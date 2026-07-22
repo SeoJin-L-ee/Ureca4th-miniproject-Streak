@@ -1,7 +1,9 @@
 package com.example.assignment.entity;
 
 import java.time.LocalDateTime;
+import java.util.Objects;
 
+import com.example.assignment.dto.request.UpdateAssignmentReqDto;
 import com.example.global.entity.BaseEntity;
 import com.example.session.entity.Session;
 
@@ -44,4 +46,9 @@ public class Assignment extends BaseEntity {
     @Column(name = "due_at", nullable = false)
     private LocalDateTime dueAt;
     
+    public void updateAssignment(UpdateAssignmentReqDto reqDto) {
+    	this.title = Objects.requireNonNullElse(reqDto.title(), this.title);
+    	this.description = Objects.requireNonNullElse(reqDto.description(), this.description);
+    	this.dueAt = Objects.requireNonNullElse(reqDto.dueAt(), this.dueAt);
+    }
 }

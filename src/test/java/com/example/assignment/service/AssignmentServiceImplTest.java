@@ -14,6 +14,7 @@ import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.transaction.annotation.Transactional;
 
 import com.example.assignment.dto.request.CreateAssignmentReqDto;
+import com.example.assignment.dto.request.UpdateAssignmentReqDto;
 import com.example.assignment.dto.response.AssignmentInfoResDto;
 import com.example.assignment.entity.Assignment;
 import com.example.assignment.repository.AssignmentRepository;
@@ -198,6 +199,129 @@ public class AssignmentServiceImplTest {
                     invalidSessionId,
                     leaderMember.getId(),
                     reqDto
+            ))
+            .isInstanceOf(GeneralException.class);
+        }
+    }
+    
+    @Nested
+    @DisplayName("과제 수정 (updateAssignment)")
+    class UpdateAssignment {
+
+        private Assignment assignment;
+
+        @BeforeEach
+        void setUpAssignment() {
+        	
+            // 수정 테스트 전용 기존 과제 생성
+            assignment = assignmentRepository.save(
+                    Assignment.builder()
+                            .session(session)
+                            .title("기존 과제 제목")
+                            .description("기존 과제 설명")
+                            .dueAt(LocalDateTime.of(2026, 7, 12, 23, 59))
+                            .build()
+            );
+        }
+
+        @Test
+        @DisplayName("성공: 스터디장이 과제 수정을 요청하면 필드가 변경되고 DB에 반영된다.")
+        void updateAssignment_Success() {
+        	
+            // given
+            UpdateAssignmentReqDto updateReqDto = new UpdateAssignmentReqDto(
+                    "수정된 과제 제목",
+                    "수정된 과제 설명",
+                    LocalDateTime.of(2026, 7, 20, 23, 59)
+            );
+
+            // when
+            AssignmentInfoResDto response = assignmentService.updateAssignment(
+                    study.getId(),
+                    session.getId(),
+                    assignment.getId(),
+                    leaderMember.getId(),
+                    updateReqDto
+            );
+
+            // then
+            // 응답 DTO 검증
+            assertThat(response).isNotNull();
+            assertThat(response.assignmentId()).isEqualTo(assignment.getId());
+            assertThat(response.title()).isEqualTo("수정된 과제 제목");
+            assertThat(response.description()).isEqualTo("수정된 과제 설명");
+            assertThat(response.dueAt()).isEqualTo(LocalDateTime.of(2026, 7, 20, 23, 59));
+
+            // DB 실시간 데이터 검증 
+            Assignment updatedAssignment = assignmentRepository.findById(assignment.getId()).orElseThrow();
+            assertThat(updatedAssignment.getTitle()).isEqualTo("수정된 과제 제목");
+            assertThat(updatedAssignment.getDescription()).isEqualTo("수정된 과제 설명");
+        }
+
+        @Test
+        @DisplayName("실패: 일반 회원이 수정 요청 시 예외가 발생한다.")
+        void updateAssignment_Fail_Forbidden() {
+        	
+            // given
+            UpdateAssignmentReqDto updateReqDto = new UpdateAssignmentReqDto(
+                    "수정 제목",
+                    "수정 설명",
+                    LocalDateTime.of(2026, 7, 20, 23, 59)
+            );
+
+            // when & then
+            assertThatThrownBy(() -> assignmentService.updateAssignment(
+                    study.getId(),
+                    session.getId(),
+                    assignment.getId(),
+                    normalMember.getId(), // 일반 회원 요청
+                    updateReqDto
+            ))
+            .isInstanceOf(GeneralException.class);
+        }
+
+        @Test
+        @DisplayName("실패: 해당 스터디에 속하지 않은 회차 ID로 요청할 경우 예외가 발생한다.")
+        void updateAssignment_Fail_InvalidSession() {
+        	
+            // given
+            Long invalidSessionId = 9999L;
+            UpdateAssignmentReqDto updateReqDto = new UpdateAssignmentReqDto(
+                    "수정 제목",
+                    "수정 설명",
+                    LocalDateTime.of(2026, 7, 20, 23, 59)
+            );
+
+            // when & then
+            assertThatThrownBy(() -> assignmentService.updateAssignment(
+                    study.getId(),
+                    invalidSessionId,
+                    assignment.getId(),
+                    leaderMember.getId(),
+                    updateReqDto
+            ))
+            .isInstanceOf(GeneralException.class);
+        }
+
+        @Test
+        @DisplayName("실패: 해당 회차에 존재하지 않는 과제 ID로 요청할 경우 예외가 발생한다.")
+        void updateAssignment_Fail_NotFoundAssignment() {
+        	
+            // given
+            Long invalidAssignmentId = 8888L;
+            UpdateAssignmentReqDto updateReqDto = new UpdateAssignmentReqDto(
+                    "수정 제목",
+                    "수정 설명",
+                    LocalDateTime.of(2026, 7, 20, 23, 59)
+            );
+
+            // when & then
+            assertThatThrownBy(() -> assignmentService.updateAssignment(
+                    study.getId(),
+                    session.getId(),
+                    invalidAssignmentId,
+                    leaderMember.getId(),
+                    updateReqDto
             ))
             .isInstanceOf(GeneralException.class);
         }
