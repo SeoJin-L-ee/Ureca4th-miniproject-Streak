@@ -1,8 +1,10 @@
 package com.example.session.entity;
 
 import java.time.LocalDateTime;
+import java.util.Objects;
 
 import com.example.global.entity.BaseEntity;
+import com.example.session.dto.request.UpdateSessionReqDto;
 import com.example.study.entity.Study;
 
 import jakarta.persistence.Column;
@@ -55,5 +57,12 @@ public class Session extends BaseEntity {
 
     @Column(name = "starts_at", nullable = false)
     private LocalDateTime startsAt;
-
+    
+    
+    public void updateSession(UpdateSessionReqDto reqDto) {
+    	this.sessionNumber = Objects.requireNonNullElse(reqDto.sessionNumber(), this.sessionNumber);
+    	this.title = Objects.requireNonNullElse(reqDto.title(), this.title);
+    	this.content = Objects.requireNonNullElse(reqDto.content(), this.content);
+    	this.startsAt = Objects.requireNonNullElse(reqDto.startsAt(), this.startsAt);
+    }
 }
