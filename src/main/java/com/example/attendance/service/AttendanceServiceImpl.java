@@ -89,6 +89,7 @@ public class AttendanceServiceImpl implements AttendanceService {
 	public AttendanceSessionResDto getSessionAttendances(long studyId, long sessionId, long memberId) {
 		
 		if (!studyRepository.existsById(studyId)) throw new GeneralException(StudyErrorCode.STUDY_NOT_FOUND);
+		if(!sessionRepository.existsByIdAndStudyId(sessionId, studyId)) throw new GeneralException(SessionErrorCode.NOT_STUDY_SESSION);
 		
 		// LEADER 로 등록된 Member 만 스터디 회차를 생성할 수 있도록 검증 
 		if(!participantRepository.existsByStudyIdAndMemberIdAndRole(studyId, memberId, StudyRole.LEADER)) {
@@ -119,6 +120,7 @@ public class AttendanceServiceImpl implements AttendanceService {
 	) {
 		
 		if (!studyRepository.existsById(studyId)) throw new GeneralException(StudyErrorCode.STUDY_NOT_FOUND);
+		if(!sessionRepository.existsByIdAndStudyId(sessionId, studyId)) throw new GeneralException(SessionErrorCode.NOT_STUDY_SESSION);
 		
 		// LEADER 로 등록된 Member 만 스터디 회차를 생성할 수 있도록 검증
 		if (!participantRepository.existsByStudyIdAndMemberIdAndRole(studyId, memberId, StudyRole.LEADER)) {
