@@ -29,6 +29,14 @@ public interface AssignmentRepository extends JpaRepository<Assignment, Long>{
 			AND a.dueAt BETWEEN :start AND :end
 	""")
 	List<Assignment> findByMemberIdAndDateRange(@Param("memberId") Long memberId, @Param("start") LocalDateTime start, @Param("end") LocalDateTime end);
+
+
+	// 과제가 존재하는지 검증 
+	boolean existsById(Long assignmentId);
+	
+	// 과제가 해당 sessionId와 studyId에 속하는 과제인지 DB에서 한 번에 검증
+	boolean existsByIdAndSessionIdAndSessionStudyId(Long assignmentId, Long sessionId, Long studyId);
+
 	
 	//마이페이지 - 마감 기한 과제 조회용. 내가 참여 중인 스터디들의, 마감이 아직 안 지난 과제 중 내가 아직 제출하지 않은 것만 마감일 오름차순으로.
 	// session/study를 같이 fetch해서 이후 스터디 제목을 꺼낼 때 N+1이 발생하지 않도록
@@ -47,4 +55,5 @@ public interface AssignmentRepository extends JpaRepository<Assignment, Long>{
 			ORDER BY a.dueAt asc
 			""")
 	List<Assignment> findUpcomingAndNotSubmittedByMemberId(@Param("memberId") Long memberId, @Param("now") LocalDateTime now);
+
 }
