@@ -1,5 +1,6 @@
 package com.example.participant.repository;
 
+import java.util.List;
 import java.util.Optional;
 
 import org.springframework.data.jpa.repository.JpaRepository;
@@ -21,4 +22,8 @@ public interface ParticipantRepository extends JpaRepository<Participant, Long>{
 	// 이후 연결된 Member 내부 필드를 얻어야 할 때 N+1 방지 목적
 	@Query("SELECT p FROM Participant p JOIN FETCH p.member WHERE p.study.id = :studyId AND p.member.id = :memberId")
     Optional<Participant> findByStudyIdAndMemberIdFetchJoinMember(@Param("studyId") Long studyId, @Param("memberId") Long memberId);
+	
+	//마이페이지 - 참여 중인 스터디 목록 조회용. Study를 함께 fetch해서 N+1 방지
+	@Query("SELECT p FROM Participant p JOIN FETCH p.study WHERE p.member.id = :memberId")
+	List<Participant> findAllByMemberIdFetchStudy(@Param("memberId") Long memberId);
 }
