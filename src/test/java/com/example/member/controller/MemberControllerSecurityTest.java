@@ -40,11 +40,17 @@ import tools.jackson.databind.ObjectMapper;
 @Slf4j
 public class MemberControllerSecurityTest {
 
-    @Autowired MockMvc mockMvc;
-    @Autowired ObjectMapper objectMapper;
+    @Autowired
+    MockMvc mockMvc;
 
-    @MockitoBean MemberService memberService;
-    @MockitoBean MemberUserDetailsService memberUserDetailsService;
+    @Autowired
+    ObjectMapper objectMapper;
+
+    @MockitoBean
+    MemberService memberService;
+
+    @MockitoBean
+    MemberUserDetailsService memberUserDetailsService;
 
     private MemberPrincipal principal() {
         return MemberPrincipal.from(Member.builder().id(1L).email("test@test.com").password("encoded").name("길동이").phone("010-1234-5678").status(MemberStatus.ACTIVE).build());
@@ -65,7 +71,7 @@ public class MemberControllerSecurityTest {
     @DisplayName("me 조회는 인증되면 200과 정보 반환")
     void meAuthenticated200() throws Exception {
         MemberPrincipal p = principal();
-        
+
         given(memberService.getMyInfo(1L)).willReturn(new MemberResDto(1L, "test@test.com", "길동이", "010-1234-5678"));
 
         MvcResult result = mockMvc.perform(get("/api/members/me").with(authentication(new UsernamePasswordAuthenticationToken(p, null, p.getAuthorities()))))
@@ -84,7 +90,7 @@ public class MemberControllerSecurityTest {
         MvcResult result = mockMvc.perform(patch("/api/members/me").with(authentication(new UsernamePasswordAuthenticationToken(p, null, p.getAuthorities())))
 											                        .contentType(MediaType.APPLICATION_JSON)
 											                        .content(objectMapper.writeValueAsBytes(request)))
-                													.andExpect(status().isForbidden()).andReturn();
+                												.andExpect(status().isForbidden()).andReturn();
         logResult("PATCH /api/members/me (CSRF 없음)", result);
     }
 
@@ -113,11 +119,11 @@ public class MemberControllerSecurityTest {
     }
 
     @Test
-    @DisplayName("비밀번호 변경이 성공하면 reLoginRequired는 true이고 세션이 무효화된다")
+    @DisplayName("비밀번호 변경이 성공하면 reLoginRequired는 true이고 세션은 무효화")
     void updatePasswordSuccessInvalidatesSession() throws Exception {
         MemberPrincipal p = principal();
         UpdateMemberReqDto request = new UpdateMemberReqDto("길동이", "010-1234-5678", "oldpass12", "newpass34");
-        
+
         given(memberService.updateMyInfo(eq(1L), any())).willReturn(new MemberResDto(1L, "test@test.com", "길동이", "010-1234-5678"));
 
         MockHttpSession session = new MockHttpSession();

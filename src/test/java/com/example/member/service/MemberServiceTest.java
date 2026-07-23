@@ -26,8 +26,12 @@ import lombok.extern.slf4j.Slf4j;
 @Slf4j
 public class MemberServiceTest {
 
-    @Mock MemberRepository memberRepository;
-    @Mock PasswordEncoder passwordEncoder;
+    @Mock
+    MemberRepository memberRepository;
+
+    @Mock
+    PasswordEncoder passwordEncoder;
+
     @InjectMocks MemberServiceImpl memberService;
 
     private Member member() {

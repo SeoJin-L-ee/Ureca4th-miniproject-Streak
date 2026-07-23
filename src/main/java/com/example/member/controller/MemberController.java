@@ -31,7 +31,7 @@ public class MemberController {
 
     @GetMapping("/me")
     public CustomResponse<MemberResDto> me(@CurrentUser MemberPrincipal principal) {
-    	
+
     	//인증되지 않은 사용자는 401 처리
         return CustomResponse.onSuccess(memberService.getMyInfo(principal.memberId()));
     }
@@ -48,7 +48,7 @@ public class MemberController {
 
         //비밀번호 변경 시 재로그인
         boolean reLoginRequired = request.newPassword() != null;
-        
+
         //세션 무효화 + SecurityContext 초기화 = 비밀번호 변경 시.
         if (reLoginRequired) {
             new SecurityContextLogoutHandler().logout(servletRequest, servletResponse, authentication);

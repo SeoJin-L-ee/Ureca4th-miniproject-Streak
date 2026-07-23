@@ -18,5 +18,4 @@ public interface SubmissionRepository extends JpaRepository<Submission, Long>{
 			AND s.member.id = :memberId
 	""")
 	List<Long> findSubmittedAssignmentIdsBySessionIdAndMemberId(@Param("sessionId") Long sessionId, @Param("memberId") Long memberId);
-	
 }
