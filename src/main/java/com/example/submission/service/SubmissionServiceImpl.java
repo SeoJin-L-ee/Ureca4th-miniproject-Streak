@@ -1,6 +1,7 @@
 package com.example.submission.service;
 
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import com.example.assignment.entity.Assignment;
 import com.example.assignment.exception.AssignmentErrorCode;
@@ -12,6 +13,7 @@ import com.example.participant.entity.Participant;
 import com.example.participant.repository.ParticipantRepository;
 import com.example.submission.converter.SubmissionConverter;
 import com.example.submission.dto.request.CreateSubmissionReqDto;
+import com.example.submission.dto.request.UpdateSubmissionReqDto;
 import com.example.submission.dto.response.SubmissionSummaryResDto;
 import com.example.submission.entity.Submission;
 import com.example.submission.exception.SubmissionErrorCode;
@@ -29,6 +31,7 @@ public class SubmissionServiceImpl implements SubmissionService {
 	
 	// 과제 제출 - 해당 스터디 참여자만 조회 가능 
 	@Override
+	@Transactional
 	public SubmissionSummaryResDto createSubmission(Long studyId, Long sessionId, Long assignmentId, Long memberId, CreateSubmissionReqDto reqDto) {
 		
 		// 해당 Study에 참여한 Member인지 검증 
@@ -55,6 +58,38 @@ public class SubmissionServiceImpl implements SubmissionService {
 		
 		return SubmissionConverter.toSubmissionSummaryResDto(savedSubmission);
 		
+	}
+
+	// 제출한 과제 수정 - 본인만 가능 
+	@Override
+	@Transactional
+	public SubmissionSummaryResDto updateSubmission(Long studyId, Long sessionId, Long assignmentId, Long submissionId, Long memberId, UpdateSubmissionReqDto reqDto) {
+		
+		// 해당 Study에 참여한 Member인지 검증
+		participantRepository.findByStudyIdAndMemberId(studyId, memberId)
+				.orElseThrow(() -> new GeneralException(CommonErrorCode.FORBIDDEN));
+		
+		
+		// 과제 존재 및 해당 스터디의 과제인지 검증
+		Assignment assignment = assignmentRepository.findById(assignmentId)
+				.orElseThrow(() -> new GeneralException(AssignmentErrorCode.ASSIGNMENT_NOT_FOUND));
+
+		if (!assignment.getSession().getStudy().getId().equals(studyId))
+			throw new GeneralException(AssignmentErrorCode.NOT_STUDY_ASSIGNMENT);
+		
+		
+		// 제출물 존재 여부 검증 
+		Submission submission = submissionRepository.findById(submissionId)
+				.orElseThrow(() -> new GeneralException(SubmissionErrorCode.SUBMISSION_NOT_FOUND));
+				
+		
+		// 수정하려는 제출물이 해당 유저의 제출물인지 검증 
+		if(!submission.getMember().getId().equals(memberId))
+			throw new GeneralException(SubmissionErrorCode.NOT_SUBMISSION_OWNER);
+		
+		submission.updateContent(reqDto.content());
+		
+		return SubmissionConverter.toSubmissionSummaryResDto(submission);
 	}
 
 }

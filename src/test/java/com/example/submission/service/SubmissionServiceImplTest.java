@@ -31,6 +31,7 @@ import com.example.study.entity.enums.StudyCategory;
 import com.example.study.entity.enums.StudyStatus;
 import com.example.study.repository.StudyRepository;
 import com.example.submission.dto.request.CreateSubmissionReqDto;
+import com.example.submission.dto.request.UpdateSubmissionReqDto;
 import com.example.submission.dto.response.SubmissionSummaryResDto;
 import com.example.submission.entity.Submission;
 import com.example.submission.exception.SubmissionErrorCode;
@@ -121,6 +122,7 @@ public class SubmissionServiceImplTest {
                 .description("과제에 대한 설명입니다.")
                 .dueAt(LocalDateTime.of(2026, 7, 16, 23, 0))
                 .build());
+
     }
 
     @Nested
@@ -273,6 +275,212 @@ public class SubmissionServiceImplTest {
             .isInstanceOf(GeneralException.class)
             .extracting(e -> ((GeneralException) e).getCode())
             .isEqualTo(SubmissionErrorCode.DUPLICATE_SUBMISSION);
+        }
+    }
+    
+    
+    
+    @Nested
+    @DisplayName("제출한 과제 수정 (updateSubmission)")
+    class UpdateSubmissionTest {
+
+        @Test
+        @DisplayName("성공: 본인이 제출한 과제를 성공적으로 수정한다.")
+        void updateSubmission_Success() {
+        	
+            // given
+        	Submission submission = submissionRepository.save(Submission.builder()
+            		.assignment(assignment)
+            		.member(member)
+            		.content("초기 과제 제출 내용")
+            		.build());
+            
+            UpdateSubmissionReqDto reqDto = new UpdateSubmissionReqDto("수정된 제출 내용입니다.");
+
+            // when
+            SubmissionSummaryResDto result = submissionService.updateSubmission(
+                    study.getId(),
+                    session.getId(),
+                    assignment.getId(),
+                    submission.getId(),
+                    member.getId(),
+                    reqDto
+            );
+
+            // then
+            assertThat(result).isNotNull();
+            
+            // DB 변경사항 검증
+            Submission updatedSubmission = submissionRepository.findById(submission.getId()).orElseThrow();
+            assertThat(updatedSubmission.getContent()).isEqualTo("수정된 제출 내용입니다.");
+        }
+
+        @Test
+        @DisplayName("예외: 스터디 참여자가 아닌 유저가 수정 시 예외가 발생한다.")
+        void updateSubmission_Forbidden_WhenNotParticipant() {
+        	
+            // given
+        	Submission submission = submissionRepository.save(Submission.builder()
+            		.assignment(assignment)
+            		.member(member)
+            		.content("초기 과제 제출 내용")
+            		.build());
+        	
+            UpdateSubmissionReqDto reqDto = new UpdateSubmissionReqDto("외부인의 수정 시도");
+
+            // when & then
+            assertThatThrownBy(() -> submissionService.updateSubmission(
+                    study.getId(),
+                    session.getId(),
+                    assignment.getId(),
+                    submission.getId(),
+                    nonParticipantMember.getId(), // 참여자가 아닌 유저
+                    reqDto
+            ))
+            .isInstanceOf(GeneralException.class)
+            .extracting(e -> ((GeneralException) e).getCode())
+            .isEqualTo(CommonErrorCode.FORBIDDEN);
+        }
+
+        @Test
+        @DisplayName("예외: 존재하지 않는 과제 ID일 경우 예외가 발생한다.")
+        void updateSubmission_NotFound_WhenAssignmentNotExist() {
+        	
+            // given
+        	Submission submission = submissionRepository.save(Submission.builder()
+            		.assignment(assignment)
+            		.member(member)
+            		.content("초기 과제 제출 내용")
+            		.build());
+        	
+            Long invalidAssignmentId = 9999L;
+            UpdateSubmissionReqDto reqDto = new UpdateSubmissionReqDto("수정 내용");
+
+            // when & then
+            assertThatThrownBy(() -> submissionService.updateSubmission(
+                    study.getId(),
+                    session.getId(),
+                    invalidAssignmentId,
+                    submission.getId(),
+                    member.getId(),
+                    reqDto
+            ))
+            .isInstanceOf(GeneralException.class)
+            .extracting(e -> ((GeneralException) e).getCode())
+            .isEqualTo(AssignmentErrorCode.ASSIGNMENT_NOT_FOUND);
+        }
+
+        @Test
+        @DisplayName("예외: 요청한 스터디의 과제가 아닐 경우 예외가 발생한다.")
+        void updateSubmission_BadRequest_WhenAssignmentNotInStudy() {
+        	
+            // given: 다른 스터디 및 과제 생성
+        	Submission submission = submissionRepository.save(Submission.builder()
+            		.assignment(assignment)
+            		.member(member)
+            		.content("초기 과제 제출 내용")
+            		.build());
+        	
+            Study otherStudy = studyRepository.save(Study.builder()
+                    .title("다른 스터디")
+                    .description("설명")
+                    .capacity(5)
+                    .category(StudyCategory.ALGORITHM)
+                    .status(StudyStatus.RECRUITING)
+                    .build());
+
+            Session otherSession = sessionRepository.save(Session.builder()
+                    .study(otherStudy)
+                    .sessionNumber(1)
+                    .title("다른 세션")
+                    .content("내용")
+                    .startsAt(LocalDateTime.of(2026, 7, 10, 14, 0))
+                    .build());
+
+            Assignment otherAssignment = assignmentRepository.save(Assignment.builder()
+                    .session(otherSession)
+                    .title("다른 과제")
+                    .description("설명")
+                    .dueAt(LocalDateTime.of(2026, 7, 16, 23, 0))
+                    .build());
+
+            UpdateSubmissionReqDto reqDto = new UpdateSubmissionReqDto("수정 내용");
+
+            // when & then
+            assertThatThrownBy(() -> submissionService.updateSubmission(
+                    study.getId(), // 현재 스터디
+                    session.getId(),
+                    otherAssignment.getId(), // 다른 스터디의 과제
+                    submission.getId(),
+                    member.getId(),
+                    reqDto
+            ))
+            .isInstanceOf(GeneralException.class)
+            .extracting(e -> ((GeneralException) e).getCode())
+            .isEqualTo(AssignmentErrorCode.NOT_STUDY_ASSIGNMENT);
+        }
+
+        @Test
+        @DisplayName("예외: 존재하지 않는 제출물 ID일 경우 예외가 발생한다.")
+        void updateSubmission_NotFound_WhenSubmissionNotExist() {
+        	
+            // given
+            Long invalidSubmissionId = 9999L;
+            UpdateSubmissionReqDto reqDto = new UpdateSubmissionReqDto("수정 내용");
+
+            // when & then
+            assertThatThrownBy(() -> submissionService.updateSubmission(
+                    study.getId(),
+                    session.getId(),
+                    assignment.getId(),
+                    invalidSubmissionId,
+                    member.getId(),
+                    reqDto
+            ))
+            .isInstanceOf(GeneralException.class)
+            .extracting(e -> ((GeneralException) e).getCode())
+            .isEqualTo(SubmissionErrorCode.SUBMISSION_NOT_FOUND);
+        }
+
+        @Test
+        @DisplayName("예외: 본인이 작성한 제출물이 아닐 경우 예외가 발생한다.")
+        void updateSubmission_Forbidden_WhenNotOwner() {
+        	
+            // given
+            Member otherMember = memberRepository.save(Member.builder()
+                    .email("other_owner@example.com")
+                    .name("다른참여자")
+                    .password("password123")
+                    .phone("010-4444-4444")
+                    .status(MemberStatus.ACTIVE)
+                    .build());
+
+            participantRepository.save(Participant.builder()
+                    .study(study)
+                    .member(otherMember)
+                    .role(StudyRole.MEMBER)
+                    .build());
+
+            Submission otherSubmission = submissionRepository.save(Submission.builder()
+                    .assignment(assignment)
+                    .member(otherMember)
+                    .content("다른 유저의 제출물")
+                    .build());
+
+            UpdateSubmissionReqDto reqDto = new UpdateSubmissionReqDto("남의 글 수정 시도");
+
+            // when & then: member.getId()가 otherSubmission을 수정하려고 시도
+            assertThatThrownBy(() -> submissionService.updateSubmission(
+                    study.getId(),
+                    session.getId(),
+                    assignment.getId(),
+                    otherSubmission.getId(),
+                    member.getId(), // 작성자가 아닌 본인 ID로 요청
+                    reqDto
+            ))
+            .isInstanceOf(GeneralException.class)
+            .extracting(e -> ((GeneralException) e).getCode())
+            .isEqualTo(SubmissionErrorCode.NOT_SUBMISSION_OWNER);
         }
     }
 }
