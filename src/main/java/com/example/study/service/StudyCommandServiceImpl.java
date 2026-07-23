@@ -26,7 +26,7 @@ import lombok.RequiredArgsConstructor;
 
 @Service
 @RequiredArgsConstructor
-public class StudyServiceImpl implements StudyService {
+public class StudyCommandServiceImpl implements StudyCommandService {
 
 	private final StudyRepository studyRepository;
 	private final MemberRepository memberRepository;
@@ -87,6 +87,8 @@ public class StudyServiceImpl implements StudyService {
 	@Transactional
 	// 스터디장 변경 (위임)
 	public UpdateStudyLeaderResDto updateStudyLeader(Long memberId, Long studyId, Long newLeaderId) {
+		// studyId 에 해당하는 Study 가 존재하지 않을 경우에 대한 에러 코드 분리 (미니 프로젝트이므로 성능 최적화보다 명확한 에러처리를 우선시)
+		if (!studyRepository.existsById(studyId)) throw new GeneralException(StudyErrorCode.STUDY_NOT_FOUND);
 		// 해당 Study 의 스터디장인 경우에만 위임 가능
 		Participant currentLeader = participantRepository.findByStudyIdAndMemberId(studyId, memberId)
 	            .filter(p -> p.getRole() == StudyRole.LEADER)

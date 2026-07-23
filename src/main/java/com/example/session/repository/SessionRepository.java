@@ -22,7 +22,6 @@ public interface SessionRepository extends JpaRepository<Session, Long>{
 	
 	// 해당 스터디에 존재하는 회차인지 검증 
 	boolean existsByIdAndStudyId(Long sessionId, Long studyId);
-	
 
 	// 해당 스터디에 존재하는 회차 가져오기 
 	Optional<Session> findByIdAndStudyId(Long sessionId, Long studyId);
@@ -37,5 +36,18 @@ public interface SessionRepository extends JpaRepository<Session, Long>{
 				AND s.startsAt BETWEEN :start AND :end
 	""")
 	List<Session> findByMemberIdAndDateRange(@Param("memberId") Long memberId, @Param("start") LocalDateTime start, @Param("end") LocalDateTime end);
+	
+	// 각 스터디 아이디별로, 현재 시각 기준 가장 가깝게 예정된 회차를 조회 (studyId, startsAt 오름차순으로 한번에)
+	//	-> 서비스에서 각 스터디 아이디별 첫번째 값만 추릴 거임 (첫 번째 값이 가장 가깝게 예정된 회차)
+	@Query("""
+			SELECT s FROM Session s
+			JOIN FETCH s.study
+			WHERE s.study.id IN :studyIds
+			  AND s.startsAt > :now
+			ORDER BY s.study.id ASC, s.startsAt ASC
+			""")
+	List<Session> findNextSessionsByStudyIds(
+			@Param("studyIds") List<Long> studyIds,
+			@Param("now") LocalDateTime now);
 
 }
