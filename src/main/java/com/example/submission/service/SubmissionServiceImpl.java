@@ -92,4 +92,33 @@ public class SubmissionServiceImpl implements SubmissionService {
 		return SubmissionConverter.toSubmissionSummaryResDto(submission);
 	}
 
+	
+	// 제출한 과제 삭제 - 본인만 가능 
+	@Override
+	@Transactional
+	public void deleteSubmission(Long studyId, Long sessionId, Long assignmentId, Long submissionId, Long memberId) {
+		
+		// 해당 Study에 참여한 Member인지 검증
+		participantRepository.findByStudyIdAndMemberId(studyId, memberId)
+				.orElseThrow(() -> new GeneralException(CommonErrorCode.FORBIDDEN));
+
+		// 과제 존재 및 해당 스터디의 과제인지 검증
+		Assignment assignment = assignmentRepository.findById(assignmentId)
+				.orElseThrow(() -> new GeneralException(AssignmentErrorCode.ASSIGNMENT_NOT_FOUND));
+
+		if (!assignment.getSession().getStudy().getId().equals(studyId))
+			throw new GeneralException(AssignmentErrorCode.NOT_STUDY_ASSIGNMENT);
+
+		// 제출물 존재 여부 검증
+		Submission submission = submissionRepository.findById(submissionId)
+				.orElseThrow(() -> new GeneralException(SubmissionErrorCode.SUBMISSION_NOT_FOUND));
+
+		// 수정하려는 제출물이 해당 유저의 제출물인지 검증
+		if (!submission.getMember().getId().equals(memberId))
+			throw new GeneralException(SubmissionErrorCode.NOT_SUBMISSION_OWNER);
+		
+		submissionRepository.delete(submission);
+		
+	}
+
 }

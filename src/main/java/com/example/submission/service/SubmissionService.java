@@ -11,4 +11,7 @@ public interface SubmissionService {
 
 	// 제출한 과제 수정 - 본인만 가능 
 	SubmissionSummaryResDto updateSubmission(Long studyId, Long sessionId, Long assignmentId, Long submissionId, Long memberId, UpdateSubmissionReqDto reqDto);
+
+	// 제출한 과제 삭제 - 본인만 가능 
+	void deleteSubmission(Long studyId, Long sessionId, Long assignmentId, Long submissionId, Long memberId);
 }

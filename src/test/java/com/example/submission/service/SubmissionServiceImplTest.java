@@ -483,4 +483,144 @@ public class SubmissionServiceImplTest {
             .isEqualTo(SubmissionErrorCode.NOT_SUBMISSION_OWNER);
         }
     }
+    
+    
+    @Nested
+    @DisplayName("제출한 과제 삭제 (deleteSubmission)")
+    class DeleteSubmissionTest {
+
+        @Test
+        @DisplayName("성공: 본인이 제출한 과제를 성공적으로 삭제한다.")
+        void deleteSubmission_Success() {
+        	
+            // given
+            Submission submission = submissionRepository.save(Submission.builder()
+                    .assignment(assignment)
+                    .member(member)
+                    .content("삭제할 과제 내용")
+                    .build());
+
+            // when
+            submissionService.deleteSubmission(
+                    study.getId(),
+                    session.getId(),
+                    assignment.getId(),
+                    submission.getId(),
+                    member.getId()
+            );
+
+            // then - DB에서 조회되지 않아야 함
+            boolean exists = submissionRepository.existsById(submission.getId());
+            assertThat(exists).isFalse();
+        }
+
+        @Test
+        @DisplayName("예외: 스터디 참여자가 아닌 유저가 삭제 시 예외가 발생한다.")
+        void deleteSubmission_Forbidden_WhenNotParticipant() {
+        	
+            // given
+            Submission submission = submissionRepository.save(Submission.builder()
+                    .assignment(assignment)
+                    .member(member)
+                    .content("삭제할 과제 내용")
+                    .build());
+            
+
+            // when & then
+            assertThatThrownBy(() -> submissionService.deleteSubmission(
+                    study.getId(),
+                    session.getId(),
+                    assignment.getId(),
+                    submission.getId(),
+                    nonParticipantMember.getId()
+            ))
+            .isInstanceOf(GeneralException.class)
+            .extracting(e -> ((GeneralException) e).getCode())
+            .isEqualTo(CommonErrorCode.FORBIDDEN);
+        }
+
+        @Test
+        @DisplayName("예외: 존재하지 않는 과제 ID일 경우 예외가 발생한다.")
+        void deleteSubmission_NotFound_WhenAssignmentNotExist() {
+        	
+            // given
+            Submission submission = submissionRepository.save(Submission.builder()
+                    .assignment(assignment)
+                    .member(member)
+                    .content("삭제할 과제 내용")
+                    .build());
+
+            Long invalidAssignmentId = 9999L;
+
+            // when & then
+            assertThatThrownBy(() -> submissionService.deleteSubmission(
+                    study.getId(),
+                    session.getId(),
+                    invalidAssignmentId,
+                    submission.getId(),
+                    member.getId()
+            ))
+            .isInstanceOf(GeneralException.class)
+            .extracting(e -> ((GeneralException) e).getCode())
+            .isEqualTo(AssignmentErrorCode.ASSIGNMENT_NOT_FOUND);
+        }
+
+        @Test
+        @DisplayName("예외: 존재하지 않는 제출물 ID일 경우 예외가 발생한다.")
+        void deleteSubmission_NotFound_WhenSubmissionNotExist() {
+        	
+            // given
+            Long invalidSubmissionId = 9999L;
+
+            // when & then
+            assertThatThrownBy(() -> submissionService.deleteSubmission(
+                    study.getId(),
+                    session.getId(),
+                    assignment.getId(),
+                    invalidSubmissionId,
+                    member.getId()
+            ))
+            .isInstanceOf(GeneralException.class)
+            .extracting(e -> ((GeneralException) e).getCode())
+            .isEqualTo(SubmissionErrorCode.SUBMISSION_NOT_FOUND);
+        }
+
+        @Test
+        @DisplayName("예외: 본인이 작성한 제출물이 아닐 경우 예외가 발생한다.")
+        void deleteSubmission_Forbidden_WhenNotOwner() {
+        	
+            // given: 다른 참여자의 제출물 생성
+            Member otherMember = memberRepository.save(Member.builder()
+                    .email("delete_owner@example.com")
+                    .name("삭제작성자")
+                    .password("password123")
+                    .phone("010-5555-5555")
+                    .status(MemberStatus.ACTIVE)
+                    .build());
+
+            participantRepository.save(Participant.builder()
+                    .study(study)
+                    .member(otherMember)
+                    .role(StudyRole.MEMBER)
+                    .build());
+
+            Submission otherSubmission = submissionRepository.save(Submission.builder()
+                    .assignment(assignment)
+                    .member(otherMember)
+                    .content("다른 유저의 제출물")
+                    .build());
+
+            // when & then: member.getId()가 다른 유저의 제출물을 삭제하려고 시도
+            assertThatThrownBy(() -> submissionService.deleteSubmission(
+                    study.getId(),
+                    session.getId(),
+                    assignment.getId(),
+                    otherSubmission.getId(),
+                    member.getId()
+            ))
+            .isInstanceOf(GeneralException.class)
+            .extracting(e -> ((GeneralException) e).getCode())
+            .isEqualTo(SubmissionErrorCode.NOT_SUBMISSION_OWNER);
+        }
+    }
 }
