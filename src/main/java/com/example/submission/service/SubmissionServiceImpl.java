@@ -11,6 +11,7 @@ import com.example.assignment.repository.AssignmentRepository;
 import com.example.global.common.code.CommonErrorCode;
 import com.example.global.common.exception.GeneralException;
 import com.example.member.entity.Member;
+import com.example.member.repository.MemberRepository;
 import com.example.participant.entity.Participant;
 import com.example.participant.repository.ParticipantRepository;
 import com.example.submission.converter.SubmissionConverter;
@@ -31,6 +32,7 @@ public class SubmissionServiceImpl implements SubmissionService {
 	private final SubmissionRepository submissionRepository;
 	private final ParticipantRepository participantRepository;
 	private final AssignmentRepository assignmentRepository;
+	private final MemberRepository memberRepository;
 	
 	// 과제 제출 - 해당 스터디 참여자만 조회 가능 
 	@Override
@@ -38,28 +40,22 @@ public class SubmissionServiceImpl implements SubmissionService {
 	public SubmissionSummaryResDto createSubmission(Long studyId, Long sessionId, Long assignmentId, Long memberId, CreateSubmissionReqDto reqDto) {
 		
 		// 해당 Study에 참여한 Member인지 검증 
-		Participant participant = participantRepository.findByStudyIdAndMemberId(studyId, memberId)
-				.orElseThrow(() -> new GeneralException(CommonErrorCode.FORBIDDEN));
+		validateParticipant(studyId, memberId);
+		validateAssignment(studyId, sessionId, assignmentId);
 
-		Member member = participant.getMember();
+		if (submissionRepository.existsByAssignmentIdAndMemberId(assignmentId, memberId)) {
+	        throw new GeneralException(SubmissionErrorCode.DUPLICATE_SUBMISSION);
+	    }
 
-		// 과제 존재 및 해당 스터디의 과제인지 검증
-		Assignment assignment = assignmentRepository.findById(assignmentId)
-				.orElseThrow(() -> new GeneralException(AssignmentErrorCode.ASSIGNMENT_NOT_FOUND));
-		
-		if(!assignment.getSession().getStudy().getId().equals(studyId))
-			throw new GeneralException(AssignmentErrorCode.NOT_STUDY_ASSIGNMENT);
-		
+		// DB 조회 없이 프록시 객체 참조
+		Assignment assignment = assignmentRepository.getReferenceById(assignmentId); 
+	    Member member = memberRepository.getReferenceById(memberId);
 		
 		// 이미 제출했는지 중복 제출 검증 
-		if(submissionRepository.existsByAssignmentIdAndMemberId(assignmentId, memberId))
-			throw new GeneralException(SubmissionErrorCode.DUPLICATE_SUBMISSION);
-
+	    Submission submission = SubmissionConverter.toSubmission(assignment, member, reqDto);
+	    Submission saved = submissionRepository.save(submission);
 		
-		Submission submission = SubmissionConverter.toSubmission(assignment, member, reqDto);
-		Submission savedSubmission = submissionRepository.save(submission);
-		
-		return SubmissionConverter.toSubmissionSummaryResDto(savedSubmission);
+		return SubmissionConverter.toSubmissionSummaryResDto(saved);
 		
 	}
 
@@ -69,27 +65,14 @@ public class SubmissionServiceImpl implements SubmissionService {
 	public SubmissionSummaryResDto updateSubmission(Long studyId, Long sessionId, Long assignmentId, Long submissionId, Long memberId, UpdateSubmissionReqDto reqDto) {
 		
 		// 해당 Study에 참여한 Member인지 검증
-		participantRepository.findByStudyIdAndMemberId(studyId, memberId)
-				.orElseThrow(() -> new GeneralException(CommonErrorCode.FORBIDDEN));
-		
+		validateParticipant(studyId, memberId);
 		
 		// 과제 존재 및 해당 스터디의 과제인지 검증
-		Assignment assignment = assignmentRepository.findById(assignmentId)
-				.orElseThrow(() -> new GeneralException(AssignmentErrorCode.ASSIGNMENT_NOT_FOUND));
-
-		if (!assignment.getSession().getStudy().getId().equals(studyId))
-			throw new GeneralException(AssignmentErrorCode.NOT_STUDY_ASSIGNMENT);
+		validateAssignment(studyId, sessionId, assignmentId);
 		
 		
 		// 제출물 존재 여부 검증 
-		Submission submission = submissionRepository.findById(submissionId)
-				.orElseThrow(() -> new GeneralException(SubmissionErrorCode.SUBMISSION_NOT_FOUND));
-				
-		
-		// 수정하려는 제출물이 해당 유저의 제출물인지 검증 
-		if(!submission.getMember().getId().equals(memberId))
-			throw new GeneralException(SubmissionErrorCode.NOT_SUBMISSION_OWNER);
-		
+		Submission submission = getOwnedSubmission(submissionId, assignmentId, memberId);
 		submission.updateContent(reqDto.content());
 		
 		return SubmissionConverter.toSubmissionSummaryResDto(submission);
@@ -102,23 +85,14 @@ public class SubmissionServiceImpl implements SubmissionService {
 	public void deleteSubmission(Long studyId, Long sessionId, Long assignmentId, Long submissionId, Long memberId) {
 		
 		// 해당 Study에 참여한 Member인지 검증
-		participantRepository.findByStudyIdAndMemberId(studyId, memberId)
-				.orElseThrow(() -> new GeneralException(CommonErrorCode.FORBIDDEN));
+		validateParticipant(studyId, memberId);
 
 		// 과제 존재 및 해당 스터디의 과제인지 검증
-		Assignment assignment = assignmentRepository.findById(assignmentId)
-				.orElseThrow(() -> new GeneralException(AssignmentErrorCode.ASSIGNMENT_NOT_FOUND));
-
-		if (!assignment.getSession().getStudy().getId().equals(studyId))
-			throw new GeneralException(AssignmentErrorCode.NOT_STUDY_ASSIGNMENT);
+		validateAssignment(studyId, sessionId, assignmentId);
 
 		// 제출물 존재 여부 검증
-		Submission submission = submissionRepository.findById(submissionId)
-				.orElseThrow(() -> new GeneralException(SubmissionErrorCode.SUBMISSION_NOT_FOUND));
-
-		// 수정하려는 제출물이 해당 유저의 제출물인지 검증
-		if (!submission.getMember().getId().equals(memberId))
-			throw new GeneralException(SubmissionErrorCode.NOT_SUBMISSION_OWNER);
+		// 제출물이 요청된 과제의 제출물이 맞는지 검증 
+		Submission submission = getOwnedSubmission(submissionId, assignmentId, memberId);
 		
 		submissionRepository.delete(submission);
 		
@@ -129,20 +103,53 @@ public class SubmissionServiceImpl implements SubmissionService {
 	public SubmissionListResDto listSubmission(Long studyId, Long sessionId, Long assignmentId, Long memberId) {
 		
 		// 해당 Study에 참여한 Member인지 검증
-		participantRepository.findByStudyIdAndMemberId(studyId, memberId)
-				.orElseThrow(() -> new GeneralException(CommonErrorCode.FORBIDDEN));
+		validateParticipant(studyId, memberId);
 
 		// 과제 존재 및 해당 스터디의 과제인지 검증
-		Assignment assignment = assignmentRepository.findById(assignmentId)
-				.orElseThrow(() -> new GeneralException(AssignmentErrorCode.ASSIGNMENT_NOT_FOUND));
-
-		if (!assignment.getSession().getStudy().getId().equals(studyId))
-			throw new GeneralException(AssignmentErrorCode.NOT_STUDY_ASSIGNMENT);
+		validateAssignment(studyId, sessionId, assignmentId);
 		
 		List<Participant> participants = participantRepository.findAllByStudyIdFetchJoinMember(studyId);
 		List<Submission> submissions = submissionRepository.findAllByAssignmentId(assignmentId);
 
 		return SubmissionConverter.toSubmissionListResDto(assignmentId, participants, submissions);
+	}
+	
+	
+	// 해당 Study에 참여한 Member인지 검증 
+	private void validateParticipant(Long studyId, Long memberId) {
+		
+	    if (!participantRepository.existsByStudyIdAndMemberId(studyId, memberId)) {
+	        throw new GeneralException(CommonErrorCode.FORBIDDEN);
+	    }
+	}
+	
+	// 과제 존재 및 해당 스터디의 과제인지 검증
+	private void validateAssignment(Long studyId, Long sessionId, Long assignmentId) {
+		
+		if (!assignmentRepository.existsById(assignmentId)) {
+			throw new GeneralException(AssignmentErrorCode.ASSIGNMENT_NOT_FOUND);
+		}
+		
+		if (!assignmentRepository.existsByIdAndSessionIdAndSessionStudyId(assignmentId, sessionId, studyId)) {
+			throw new GeneralException(AssignmentErrorCode.NOT_STUDY_ASSIGNMENT);
+		}
+	}
+
+	// Submission 존재 및 소유자 검증 
+	private Submission getOwnedSubmission(Long submissionId, Long assignmentId, Long memberId) {
+		
+	    Submission submission = submissionRepository.findById(submissionId)
+	            .orElseThrow(() -> new GeneralException(SubmissionErrorCode.SUBMISSION_NOT_FOUND));
+
+	    if (!submission.getAssignment().getId().equals(assignmentId)) {
+	        throw new GeneralException(SubmissionErrorCode.SUBMISSION_NOT_FOUND);
+	    }
+
+	    if (!submission.getMember().getId().equals(memberId)) {
+	        throw new GeneralException(SubmissionErrorCode.NOT_SUBMISSION_OWNER);
+	    }
+
+	    return submission;
 	}
 
 }

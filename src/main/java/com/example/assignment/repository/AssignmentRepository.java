@@ -30,4 +30,9 @@ public interface AssignmentRepository extends JpaRepository<Assignment, Long>{
 	""")
 	List<Assignment> findByMemberIdAndDateRange(@Param("memberId") Long memberId, @Param("start") LocalDateTime start, @Param("end") LocalDateTime end);
 
+	// 과제가 존재하는지 검증 
+	boolean existsById(Long assignmentId);
+	
+	// 과제가 해당 sessionId와 studyId에 속하는 과제인지 DB에서 한 번에 검증
+	boolean existsByIdAndSessionIdAndSessionStudyId(Long assignmentId, Long sessionId, Long studyId);
 }
