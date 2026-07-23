@@ -6,19 +6,13 @@ import com.example.member.entity.Member;
 
 public class MemberConverter {
 
-	// Member -> MemberResponse
+	// Member -> MemberResDto (내 정보 조회)
 	public static MemberResDto toMemberResponse(Member member) {
-		return new MemberResDto(
-				member.getId(),
-				member.getEmail(),
-				member.getName(),
-				member.getPhone()
-		);
+		return new MemberResDto(member.getId(), member.getEmail(), member.getName(), member.getPhone());
 	}
 
-	// MemberResponse -> UpdateMemberResDto
+	// MemberResponse -> UpdateMemberResDto (내 정보 수정)
 	public static UpdateMemberResDto toMemberUpdateResDto(MemberResDto member, boolean reLoginRequired) {
 		return new UpdateMemberResDto(member, reLoginRequired);
 	}
-
 }

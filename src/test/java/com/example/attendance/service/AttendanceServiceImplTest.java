@@ -424,4 +424,70 @@ public class AttendanceServiceImplTest {
             .isInstanceOf(GeneralException.class);
         }
     }
+
+
+    @Nested
+    @Order(6)
+    @DisplayName("멤버의 최장 연속 출석일(Streak) 계산 테스트")
+    class GetMyLongestStreakTest {
+
+        @Test
+        @DisplayName("하루 차이로 연속 출석한 구간만 스트릭으로 인정한다.")
+        void getMyLongestStreak_ConsecutiveDaysOnly() {
+
+            // given
+            LocalDateTime day1 = LocalDateTime.now();
+
+            Session s1 = sessionRepository.save(Session.builder().study(study).sessionNumber(10).title("streak1").content("내용").startsAt(day1).build());
+            Session s2 = sessionRepository.save(Session.builder().study(study).sessionNumber(11).title("streak2").content("내용").startsAt(day1.plusDays(1)).build());   // 하루 뒤 -> 연속
+            Session s3 = sessionRepository.save(Session.builder().study(study).sessionNumber(12).title("streak3").content("내용").startsAt(day1.plusDays(3)).build());   // 이틀 이상 벌어짐 -> 끊김
+            Session s4 = sessionRepository.save(Session.builder().study(study).sessionNumber(13).title("streak4").content("내용").startsAt(day1.plusDays(4)).build());   // 하루 뒤 -> 새로 연속 시작
+            Session s5 = sessionRepository.save(Session.builder().study(study).sessionNumber(14).title("streak5").content("내용").startsAt(day1.plusDays(5)).build());   // 하루 뒤 -> 연속
+
+            attendanceRepository.save(Attendance.builder().session(s1).member(member1).status(AttendanceStatus.PRESENT).build());
+            attendanceRepository.save(Attendance.builder().session(s2).member(member1).status(AttendanceStatus.PRESENT).build());
+            attendanceRepository.save(Attendance.builder().session(s3).member(member1).status(AttendanceStatus.PRESENT).build());
+            attendanceRepository.save(Attendance.builder().session(s4).member(member1).status(AttendanceStatus.PRESENT).build());
+            attendanceRepository.save(Attendance.builder().session(s5).member(member1).status(AttendanceStatus.PRESENT).build());
+
+            // when
+            int longest = attendanceService.getMyLongestStreak(member1.getId());
+
+            // then
+            // day1,day2 = 2일 연속 / 이후 2일 차이라 끊김 / 마지막 3일 연속 -> 최장 3
+            assertThat(longest).isEqualTo(3);
+        }
+
+        @Test
+        @DisplayName("다른 스터디의 출석은 서로 섞이지 않고 스터디별로 따로 계산한다.")
+        void getMyLongestStreak_SeparatesByStudy() {
+
+            // given
+            Study studyB = studyRepository.save(
+                    Study.builder().title("스터디B").description("설명").capacity(10).category(StudyCategory.ALGORITHM).status(StudyStatus.RECRUITING).build()
+            );
+
+            LocalDateTime day1 = LocalDateTime.now();
+
+            // 스터디A(기존 study): day1, day2 출석 -> 연속 2일
+            Session aSession1 = sessionRepository.save(Session.builder().study(study).sessionNumber(20).title("A1").content("내용").startsAt(day1).build());
+            Session aSession2 = sessionRepository.save(Session.builder().study(study).sessionNumber(21).title("A2").content("내용").startsAt(day1.plusDays(1)).build());
+
+            // 스터디B: day2, day3 출석 -> 연속 2일 (합쳐지면 3으로 잘못 계산될 수 있음)
+            Session bSession1 = sessionRepository.save(Session.builder().study(studyB).sessionNumber(1).title("B1").content("내용").startsAt(day1.plusDays(1)).build());
+            Session bSession2 = sessionRepository.save(Session.builder().study(studyB).sessionNumber(2).title("B2").content("내용").startsAt(day1.plusDays(2)).build());
+
+            attendanceRepository.save(Attendance.builder().session(aSession1).member(member1).status(AttendanceStatus.PRESENT).build());
+            attendanceRepository.save(Attendance.builder().session(aSession2).member(member1).status(AttendanceStatus.PRESENT).build());
+            attendanceRepository.save(Attendance.builder().session(bSession1).member(member1).status(AttendanceStatus.PRESENT).build());
+            attendanceRepository.save(Attendance.builder().session(bSession2).member(member1).status(AttendanceStatus.PRESENT).build());
+
+            // when
+            int longest = attendanceService.getMyLongestStreak(member1.getId());
+
+            // then
+            // 스터디별로 계산하면 A=2, B=2 이므로 최댓값은 2 (전체를 합쳤다면 3이 나왔을 것)
+            assertThat(longest).isEqualTo(2);
+        }
+    }
 }

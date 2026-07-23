@@ -26,4 +26,5 @@ public interface SubmissionRepository extends JpaRepository<Submission, Long>{
 	
 	// 특정 과제에 제출된 모든 Submission 조회 
 	List<Submission> findAllByAssignmentId(Long assignmentId);
+
 }

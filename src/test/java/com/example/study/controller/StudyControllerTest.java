@@ -30,7 +30,7 @@ import com.example.study.dto.response.StudyInfoResDto;
 import com.example.study.dto.response.UpdateStudyLeaderResDto;
 import com.example.study.entity.enums.StudyCategory;
 import com.example.study.entity.enums.StudyStatus;
-import com.example.study.service.StudyService;
+import com.example.study.service.StudyCommandService;
 
 import tools.jackson.databind.ObjectMapper;
 
@@ -44,7 +44,7 @@ public class StudyControllerTest {
     private ObjectMapper objectMapper;
 
     @MockitoBean
-    private StudyService studyService;
+    private StudyCommandService studyCommandService;
     
     // 시큐리티 인증 완료한 가짜 사용자 정보 생성
     private Authentication getAuthentication() {
@@ -67,7 +67,7 @@ public class StudyControllerTest {
     	CreateStudyReqDto reqDto = new CreateStudyReqDto("유레카 스터디", "설명", 5, StudyCategory.ALGORITHM);
         StudyInfoResDto resDto = new StudyInfoResDto("유레카 스터디", "설명", 5, null, StudyStatus.RECRUITING);
         // Controller 테스트이므로, 서비스 로직이 잘 작동한다고 가정하고 만들어 둔 resDto 반환
-        given(studyService.createStudy(any(), any(CreateStudyReqDto.class))).willReturn(resDto);
+        given(studyCommandService.createStudy(any(), any(CreateStudyReqDto.class))).willReturn(resDto);
 
         this.mockMvc.perform(
         		post("/api/studies")
@@ -84,7 +84,7 @@ public class StudyControllerTest {
     void updateStudy() throws Exception {
         UpdateStudyReqDto reqDto = new UpdateStudyReqDto("수정된 제목", "수정된 설명", 5, null);
         StudyInfoResDto resDto = new StudyInfoResDto("수정된 제목", "수정된 설명", 5, null, StudyStatus.RECRUITING);
-        given(studyService.updateStudy(any(), eq(1L), any(UpdateStudyReqDto.class))).willReturn(resDto);
+        given(studyCommandService.updateStudy(any(), eq(1L), any(UpdateStudyReqDto.class))).willReturn(resDto);
 
         this.mockMvc.perform(
         		patch("/api/studies/{studyId}", 1L)
@@ -100,7 +100,7 @@ public class StudyControllerTest {
     @DisplayName("스터디 상태 변경 (PATCH /api/studies/{studyId}/status)")
     void updateStudyStatus() throws Exception {
         StudyInfoResDto resDto = new StudyInfoResDto("제목", "설명", 5, null, StudyStatus.CLOSED);
-        given(studyService.updateStudyStatus(any(), eq(1L), eq(StudyStatus.CLOSED))).willReturn(resDto);
+        given(studyCommandService.updateStudyStatus(any(), eq(1L), eq(StudyStatus.CLOSED))).willReturn(resDto);
 
         this.mockMvc.perform(
         		patch("/api/studies/{studyId}/status", 1L)
@@ -115,7 +115,7 @@ public class StudyControllerTest {
     @DisplayName("스터디장 변경 (PATCH /api/studies/{studyId}/leader)")
     void updateStudyLeader() throws Exception {
         UpdateStudyLeaderResDto resDto = new UpdateStudyLeaderResDto(1L, 1L, "새 스터디장 이름");
-        given(studyService.updateStudyLeader(any(), eq(1L), eq(1L))).willReturn(resDto);
+        given(studyCommandService.updateStudyLeader(any(), eq(1L), eq(1L))).willReturn(resDto);
         
         this.mockMvc.perform(
         		patch("/api/studies/{studyId}/leader", 1L)
@@ -129,7 +129,7 @@ public class StudyControllerTest {
     @Test
     @DisplayName("스터디 soft delete (DELETE /api/studies/{studyId})")
     void softDeleteStudy() throws Exception {
-        doNothing().when(studyService).softDeleteStudy(any(), eq(1L));
+        doNothing().when(studyCommandService).softDeleteStudy(any(), eq(1L));
 
         this.mockMvc.perform(
         		delete("/api/studies/{studyId}", 1L)
