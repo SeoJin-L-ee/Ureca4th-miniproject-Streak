@@ -6,7 +6,7 @@ import com.example.study.dto.response.StudyInfoResDto;
 import com.example.study.dto.response.UpdateStudyLeaderResDto;
 import com.example.study.entity.enums.StudyStatus;
 
-public interface StudyService {
+public interface StudyCommandService {
 	// 스터디 생성
 	StudyInfoResDto createStudy(Long memberId, CreateStudyReqDto reqDto);
 	// 스터디 수정

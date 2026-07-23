@@ -35,10 +35,10 @@ import com.example.study.entity.enums.StudyStatus;
 import com.example.study.repository.StudyRepository;
 
 @ExtendWith(MockitoExtension.class)
-class StudyServiceImplTest {
+class StudyCommandServiceImplTest {
 
     @InjectMocks
-    private StudyServiceImpl studyService;
+    private StudyCommandServiceImpl studyCommandService;
 
     @Mock
     private StudyRepository studyRepository;
@@ -96,7 +96,7 @@ class StudyServiceImplTest {
             when(participantRepository.save(any(Participant.class)))
             						  .thenAnswer(invocation -> invocation.getArgument(0, Participant.class));
             // when
-            StudyInfoResDto result = studyService.createStudy(memberId, reqDto);
+            StudyInfoResDto result = studyCommandService.createStudy(memberId, reqDto);
 
             // then
             assertThat(result).isNotNull();
@@ -116,7 +116,7 @@ class StudyServiceImplTest {
             ArgumentCaptor<Participant> participantCaptor = ArgumentCaptor.forClass(Participant.class);
 
             // when
-            studyService.createStudy(memberId, reqDto);
+            studyCommandService.createStudy(memberId, reqDto);
 
             // then
             verify(participantRepository).save(participantCaptor.capture());
@@ -134,7 +134,7 @@ class StudyServiceImplTest {
             when(memberRepository.findById(memberId)).thenReturn(Optional.empty());
 
             // when, then
-            assertThatThrownBy(() -> studyService.createStudy(memberId, reqDto)).isInstanceOf(GeneralException.class);
+            assertThatThrownBy(() -> studyCommandService.createStudy(memberId, reqDto)).isInstanceOf(GeneralException.class);
             verify(studyRepository, never()).save(any(Study.class));
             verify(participantRepository, never()).save(any(Participant.class));
         }
@@ -153,7 +153,7 @@ class StudyServiceImplTest {
             when(participantRepository.existsByStudyIdAndMemberIdAndRole(studyId, memberId, StudyRole.LEADER)).thenReturn(true);
 
             // when
-            StudyInfoResDto result =studyService.updateStudy(memberId, studyId, reqDto);
+            StudyInfoResDto result =studyCommandService.updateStudy(memberId, studyId, reqDto);
 
             // then
             assertThat(result).isNotNull();
@@ -172,7 +172,7 @@ class StudyServiceImplTest {
             when(studyRepository.findById(studyId)).thenReturn(Optional.empty());
 
             // when, then
-            assertThatThrownBy(() -> studyService.updateStudy(memberId, studyId, reqDto)).isInstanceOf(GeneralException.class);
+            assertThatThrownBy(() -> studyCommandService.updateStudy(memberId, studyId, reqDto)).isInstanceOf(GeneralException.class);
 
             verify(participantRepository, never()).existsByStudyIdAndMemberIdAndRole(any(), any(), any());
         }
@@ -188,7 +188,7 @@ class StudyServiceImplTest {
             when(participantRepository.existsByStudyIdAndMemberIdAndRole(studyId, memberId, StudyRole.LEADER )).thenReturn(false);
 
             // when, then
-            assertThatThrownBy(() -> studyService.updateStudy(memberId, studyId, reqDto)).isInstanceOf(GeneralException.class);
+            assertThatThrownBy(() -> studyCommandService.updateStudy(memberId, studyId, reqDto)).isInstanceOf(GeneralException.class);
             assertThat(testStudy.getTitle()).isEqualTo(originalTitle);
         }
 
@@ -204,7 +204,7 @@ class StudyServiceImplTest {
             when(participantRepository.existsByStudyIdAndMemberIdAndRole(studyId, memberId, StudyRole.LEADER)).thenReturn(true);
 
             // when
-            studyService.updateStudy(memberId, studyId, reqDto);
+            studyCommandService.updateStudy(memberId, studyId, reqDto);
 
             // then
             assertThat(testStudy.getTitle()).isEqualTo("제목수정");
@@ -226,7 +226,7 @@ class StudyServiceImplTest {
             when(participantRepository.existsByStudyIdAndMemberIdAndRole(studyId, memberId, StudyRole.LEADER)).thenReturn(true);
 
             // when
-            StudyInfoResDto result =studyService.updateStudyStatus(memberId, studyId, StudyStatus.CLOSED);
+            StudyInfoResDto result =studyCommandService.updateStudyStatus(memberId, studyId, StudyStatus.CLOSED);
 
             // then
             assertThat(result).isNotNull();
@@ -240,7 +240,7 @@ class StudyServiceImplTest {
             when(studyRepository.findById(studyId)).thenReturn(Optional.empty());
 
             // when, then
-            assertThatThrownBy(() -> studyService.updateStudyStatus(memberId,studyId,StudyStatus.CLOSED))
+            assertThatThrownBy(() -> studyCommandService.updateStudyStatus(memberId,studyId,StudyStatus.CLOSED))
             									 .isInstanceOf(GeneralException.class);
             verify(participantRepository, never()).existsByStudyIdAndMemberIdAndRole(any(), any(), any());
         }
@@ -255,7 +255,7 @@ class StudyServiceImplTest {
             when(participantRepository.existsByStudyIdAndMemberIdAndRole(studyId, memberId, StudyRole.LEADER)).thenReturn(false);
 
             // when, then
-            assertThatThrownBy(() -> studyService.updateStudyStatus(memberId, studyId, StudyStatus.CLOSED))
+            assertThatThrownBy(() -> studyCommandService.updateStudyStatus(memberId, studyId, StudyStatus.CLOSED))
             									 .isInstanceOf(GeneralException.class);
             assertThat(testStudy.getStatus()).isEqualTo(originalStatus);
         }
@@ -298,7 +298,7 @@ class StudyServiceImplTest {
             when(participantRepository.findByStudyIdAndMemberIdFetchJoinMember(studyId,newLeaderId)).thenReturn(Optional.of(newLeaderParticipant));
 
             // when
-            UpdateStudyLeaderResDto result = studyService.updateStudyLeader(memberId, studyId, newLeaderId);
+            UpdateStudyLeaderResDto result = studyCommandService.updateStudyLeader(memberId, studyId, newLeaderId);
 
             // then
             assertThat(result).isNotNull();
@@ -322,7 +322,7 @@ class StudyServiceImplTest {
             when(participantRepository.findByStudyIdAndMemberId(studyId, memberId)).thenReturn(Optional.of(normalParticipant));
 
             // when, then
-            assertThatThrownBy(() -> studyService.updateStudyLeader(memberId, studyId, newLeaderId)).isInstanceOf(GeneralException.class);
+            assertThatThrownBy(() -> studyCommandService.updateStudyLeader(memberId, studyId, newLeaderId)).isInstanceOf(GeneralException.class);
             assertThat(normalParticipant.getRole()).isEqualTo(StudyRole.MEMBER);
             verify(participantRepository, never()).findByStudyIdAndMemberIdFetchJoinMember(any(), any());
         }
@@ -334,7 +334,7 @@ class StudyServiceImplTest {
             when(participantRepository.findByStudyIdAndMemberId(studyId, memberId)).thenReturn(Optional.empty());
 
             // when, then
-            assertThatThrownBy(() -> studyService.updateStudyLeader(memberId, studyId, newLeaderId)).isInstanceOf(GeneralException.class);
+            assertThatThrownBy(() -> studyCommandService.updateStudyLeader(memberId, studyId, newLeaderId)).isInstanceOf(GeneralException.class);
             verify(participantRepository, never()).findByStudyIdAndMemberIdFetchJoinMember(any(), any());
         }
 
@@ -346,7 +346,7 @@ class StudyServiceImplTest {
             when(participantRepository.findByStudyIdAndMemberIdFetchJoinMember(studyId, newLeaderId)).thenReturn(Optional.empty());
 
             // when, then
-            assertThatThrownBy(() -> studyService.updateStudyLeader(memberId, studyId, newLeaderId)).isInstanceOf(GeneralException.class);
+            assertThatThrownBy(() -> studyCommandService.updateStudyLeader(memberId, studyId, newLeaderId)).isInstanceOf(GeneralException.class);
             assertThat(currentLeaderParticipant.getRole()).isEqualTo(StudyRole.LEADER);
             assertThat(newLeaderParticipant.getRole()).isEqualTo(StudyRole.MEMBER);
         }
@@ -364,7 +364,7 @@ class StudyServiceImplTest {
             when(participantRepository.existsByStudyIdAndMemberIdAndRole(studyId, memberId, StudyRole.LEADER)).thenReturn(true);
 
             // when
-            studyService.softDeleteStudy(memberId, studyId);
+            studyCommandService.softDeleteStudy(memberId, studyId);
 
             // then
             assertThat(testStudy.isDeleted()).isTrue();
@@ -379,7 +379,7 @@ class StudyServiceImplTest {
             when(studyRepository.findById(studyId)).thenReturn(Optional.empty());
 
             // when, then
-            assertThatThrownBy(() -> studyService.softDeleteStudy(memberId, studyId)).isInstanceOf(GeneralException.class);
+            assertThatThrownBy(() -> studyCommandService.softDeleteStudy(memberId, studyId)).isInstanceOf(GeneralException.class);
             verify(participantRepository, never()).existsByStudyIdAndMemberIdAndRole(any(), any(), any());
         }
 
@@ -391,7 +391,7 @@ class StudyServiceImplTest {
             when(participantRepository.existsByStudyIdAndMemberIdAndRole(studyId, memberId, StudyRole.LEADER)).thenReturn(false);
 
             // when, then
-            assertThatThrownBy(() -> studyService.softDeleteStudy(memberId, studyId)).isInstanceOf(GeneralException.class);
+            assertThatThrownBy(() -> studyCommandService.softDeleteStudy(memberId, studyId)).isInstanceOf(GeneralException.class);
             assertThat(testStudy.isDeleted()).isFalse();
         }
     }

@@ -1,4 +1,4 @@
-package com.example.participant.exception;
+package com.example.assignment.exception;
 
 import org.springframework.http.HttpStatus;
 
@@ -9,13 +9,13 @@ import lombok.Getter;
 
 @Getter
 @AllArgsConstructor
-public enum ParticipantErrorCode implements BaseErrorCode {
+public enum AssignmentErrorCode implements BaseErrorCode {
 	
-	PARTICIPANT_NOT_FOUND(HttpStatus.NOT_FOUND, "PARTICIPANT404-0", "해당하는 참여자가 존재하지 않습니다."),
+	ASSIGNMENT_NOT_FOUND(HttpStatus.NOT_FOUND, "ASSIGNMENT404-0", "아이디에 해당하는 과제가 존재하지 않습니다."),
     
     ;
 	
     private final HttpStatus status;
     private final String code;
-    private final String message;
+    private final String message;	
 }
