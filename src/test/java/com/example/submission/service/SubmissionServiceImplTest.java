@@ -32,6 +32,8 @@ import com.example.study.entity.enums.StudyStatus;
 import com.example.study.repository.StudyRepository;
 import com.example.submission.dto.request.CreateSubmissionReqDto;
 import com.example.submission.dto.request.UpdateSubmissionReqDto;
+import com.example.submission.dto.response.SubmissionInfoResDto;
+import com.example.submission.dto.response.SubmissionListResDto;
 import com.example.submission.dto.response.SubmissionSummaryResDto;
 import com.example.submission.entity.Submission;
 import com.example.submission.exception.SubmissionErrorCode;
@@ -621,6 +623,151 @@ public class SubmissionServiceImplTest {
             .isInstanceOf(GeneralException.class)
             .extracting(e -> ((GeneralException) e).getCode())
             .isEqualTo(SubmissionErrorCode.NOT_SUBMISSION_OWNER);
+        }
+    }
+    
+    @Nested
+    @DisplayName("과제별 제출 목록 조회 (listSubmission)")
+    class ListSubmissionTest {
+
+        @Test
+        @DisplayName("성공: 제출한 유저(true)와 미제출 유저(false) 목록이 함께 조회된다.")
+        void listSubmission_Success() {
+        	
+            // given
+            // 추가 참여자(미제출자) 생성 및 등록
+            Member unsubmittedMember = memberRepository.save(Member.builder()
+                    .email("unsubmitted@example.com")
+                    .name("미제출자")
+                    .password("password123")
+                    .phone("010-9999-9999")
+                    .status(MemberStatus.ACTIVE)
+                    .build());
+
+            participantRepository.save(Participant.builder()
+                    .study(study)
+                    .member(unsubmittedMember)
+                    .role(StudyRole.MEMBER)
+                    .build());
+
+            // 기존 참여자의 제출물만 DB에 저장
+            Submission submission = submissionRepository.save(Submission.builder()
+                    .assignment(assignment)
+                    .member(member)
+                    .content("제출한 과제 내용")
+                    .build());
+
+            
+            // when: 스터디 참여자인 member가 과제 제출 목록 조회 요청
+            SubmissionListResDto result = submissionService.listSubmission(
+                    study.getId(),
+                    session.getId(),
+                    assignment.getId(),
+                    member.getId()
+            );
+
+            // then
+            assertThat(result).isNotNull();
+            assertThat(result.assignmentId()).isEqualTo(assignment.getId());
+            assertThat(result.submissions()).hasSize(2); // 제출자 1명 + 미제출자 1명 = 총 2명
+
+            // 제출 완료된 유저 검증 (member)
+            SubmissionInfoResDto submittedDto = result.submissions().stream()
+                    .filter(s -> s.memberId().equals(member.getId()))
+                    .findFirst()
+                    .orElseThrow();
+            
+            assertThat(submittedDto.isSubmitted()).isTrue();
+            assertThat(submittedDto.submissionId()).isEqualTo(submission.getId());
+            assertThat(submittedDto.content()).isEqualTo("제출한 과제 내용");
+            assertThat(submittedDto.memberName()).isEqualTo(member.getName());
+
+            // 미제출 유저 검증 
+            SubmissionInfoResDto unsubmittedDto = result.submissions().stream()
+                    .filter(s -> s.memberId().equals(unsubmittedMember.getId()))
+                    .findFirst()
+                    .orElseThrow();
+
+            assertThat(unsubmittedDto.isSubmitted()).isFalse();
+            assertThat(unsubmittedDto.submissionId()).isNull();
+            assertThat(unsubmittedDto.content()).isNull();
+            assertThat(unsubmittedDto.createdAt()).isNull();
+            assertThat(unsubmittedDto.memberName()).isEqualTo("미제출자");
+        }
+
+        @Test
+        @DisplayName("예외: 해당 스터디의 참여자가 아닌 경우 예외가 발생한다.")
+        void listSubmission_Forbidden_WhenNotParticipant() {
+        	
+            // when & then
+            assertThatThrownBy(() -> submissionService.listSubmission(
+                    study.getId(),
+                    session.getId(),
+                    assignment.getId(),
+                    nonParticipantMember.getId() // 외부인 ID로 조회 요청
+            ))
+            .isInstanceOf(GeneralException.class)
+            .extracting(e -> ((GeneralException) e).getCode())
+            .isEqualTo(CommonErrorCode.FORBIDDEN);
+        }
+
+        @Test
+        @DisplayName("예외: 존재하지 않는 과제 ID 조회 시 예외가 발생한다.")
+        void listSubmission_NotFound_WhenAssignmentNotExist() {
+        	
+            // given
+            Long invalidAssignmentId = 9999L;
+
+            // when & then
+            assertThatThrownBy(() -> submissionService.listSubmission(
+                    study.getId(),
+                    session.getId(),
+                    invalidAssignmentId,
+                    member.getId()
+            ))
+            .isInstanceOf(GeneralException.class)
+            .extracting(e -> ((GeneralException) e).getCode())
+            .isEqualTo(AssignmentErrorCode.ASSIGNMENT_NOT_FOUND);
+        }
+
+        @Test
+        @DisplayName("예외: 해당 스터디의 과제가 아닌 경우 예외가 발생한다.")
+        void listSubmission_BadRequest_WhenNotStudyAssignment() {
+        	
+            // given
+            Study otherStudy = studyRepository.save(Study.builder()
+                    .title("다른 스터디")
+                    .description("다른 스터디입니다..")
+                    .capacity(8)
+                    .category(StudyCategory.ETC)
+                    .status(StudyStatus.RECRUITING)
+                    .build());
+
+            Session otherSession = sessionRepository.save(Session.builder()
+                    .study(otherStudy)
+                    .sessionNumber(1)
+                    .title("다른 세션")
+                    .content("내용")
+                    .startsAt(LocalDateTime.of(2026, 7, 10, 14, 0)) 
+                    .build());
+
+            Assignment otherAssignment = assignmentRepository.save(Assignment.builder()
+                    .session(otherSession)
+                    .title("다른 스터디 과제")
+                    .description("다른 과제 설명")
+                    .dueAt(LocalDateTime.of(2026, 7, 16, 23, 0))
+                    .build());
+
+            // when & then: 현재 studyId에 다른 스터디의 assignmentId로 조회 요청 시
+            assertThatThrownBy(() -> submissionService.listSubmission(
+                    study.getId(),
+                    session.getId(),
+                    otherAssignment.getId(),
+                    member.getId()
+            ))
+            .isInstanceOf(GeneralException.class)
+            .extracting(e -> ((GeneralException) e).getCode())
+            .isEqualTo(AssignmentErrorCode.NOT_STUDY_ASSIGNMENT);
         }
     }
 }

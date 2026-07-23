@@ -2,6 +2,7 @@ package com.example.submission.controller;
 
 import org.springframework.http.HttpStatus;
 import org.springframework.web.bind.annotation.DeleteMapping;
+import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PatchMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -14,6 +15,7 @@ import com.example.global.security.CurrentUser;
 import com.example.global.security.MemberPrincipal;
 import com.example.submission.dto.request.CreateSubmissionReqDto;
 import com.example.submission.dto.request.UpdateSubmissionReqDto;
+import com.example.submission.dto.response.SubmissionListResDto;
 import com.example.submission.dto.response.SubmissionSummaryResDto;
 import com.example.submission.service.SubmissionService;
 
@@ -65,5 +67,17 @@ public class SubmissionController {
 	){
 		submissionService.deleteSubmission(studyId, sessionId, assignmentId, submissionId, principal.memberId());
 		return CustomResponse.onSuccess(null);
+	}
+	
+	// 과제별 제출된 과제 목록 조회 
+	@GetMapping("/studies/{studyId}/sessions/{sessionId}/assignments/{assignmentId}/submissions")
+	public CustomResponse<SubmissionListResDto> listSubmission(
+			@PathVariable("studyId") Long studyId,
+			@PathVariable("sessionId") Long sessionId,
+			@PathVariable("assignmentId") Long assignmentId, 
+			@CurrentUser MemberPrincipal principal
+	){
+		SubmissionListResDto resDto = submissionService.listSubmission(studyId, sessionId, assignmentId, principal.memberId());
+		return CustomResponse.onSuccess(resDto);
 	}
 }

@@ -1,5 +1,7 @@
 package com.example.submission.service;
 
+import java.util.List;
+
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -14,6 +16,7 @@ import com.example.participant.repository.ParticipantRepository;
 import com.example.submission.converter.SubmissionConverter;
 import com.example.submission.dto.request.CreateSubmissionReqDto;
 import com.example.submission.dto.request.UpdateSubmissionReqDto;
+import com.example.submission.dto.response.SubmissionListResDto;
 import com.example.submission.dto.response.SubmissionSummaryResDto;
 import com.example.submission.entity.Submission;
 import com.example.submission.exception.SubmissionErrorCode;
@@ -119,6 +122,27 @@ public class SubmissionServiceImpl implements SubmissionService {
 		
 		submissionRepository.delete(submission);
 		
+	}
+
+	// 과제별 제출 목록 조회 
+	@Override
+	public SubmissionListResDto listSubmission(Long studyId, Long sessionId, Long assignmentId, Long memberId) {
+		
+		// 해당 Study에 참여한 Member인지 검증
+		participantRepository.findByStudyIdAndMemberId(studyId, memberId)
+				.orElseThrow(() -> new GeneralException(CommonErrorCode.FORBIDDEN));
+
+		// 과제 존재 및 해당 스터디의 과제인지 검증
+		Assignment assignment = assignmentRepository.findById(assignmentId)
+				.orElseThrow(() -> new GeneralException(AssignmentErrorCode.ASSIGNMENT_NOT_FOUND));
+
+		if (!assignment.getSession().getStudy().getId().equals(studyId))
+			throw new GeneralException(AssignmentErrorCode.NOT_STUDY_ASSIGNMENT);
+		
+		List<Participant> participants = participantRepository.findAllByStudyIdFetchJoinMember(studyId);
+		List<Submission> submissions = submissionRepository.findAllByAssignmentId(assignmentId);
+
+		return SubmissionConverter.toSubmissionListResDto(assignmentId, participants, submissions);
 	}
 
 }
