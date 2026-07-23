@@ -67,7 +67,6 @@ public interface ApplicationRepository extends JpaRepository<Application, Long> 
 			@Param("applicantId") Long applicantId
 	);
 	
-	// TODO: 별칭 빼고, 인터페이스를 프로젝션 DTO로 바꿨음 ㄱㅊ겠지?
 	// 스터디 목록 조회를 위해, 현재 사용자의 지원 상태를 전부 조회
 	@Query("""
 			SELECT new com.example.application.dto.response.MemberApplicationStatusDto(
