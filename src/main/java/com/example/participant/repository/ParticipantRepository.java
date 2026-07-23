@@ -22,6 +22,8 @@ public interface ParticipantRepository extends JpaRepository<Participant, Long>{
     // 해당 Study 에 참여한 Member만 스터디 회차를 조회할 수 있도록 검증
 	boolean existsByStudyIdAndMemberId(Long studyId, Long memberId);
 	
+	long countByStudyId(Long studyId);
+	
 	// 스터디에 참여한 모든 member 조회 
 	List<Participant> findAllByStudyId(Long studyId);
 	

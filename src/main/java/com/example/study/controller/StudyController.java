@@ -19,6 +19,7 @@ import com.example.global.security.CurrentUser;
 import com.example.global.security.MemberPrincipal;
 import com.example.study.dto.request.CreateStudyReqDto;
 import com.example.study.dto.request.UpdateStudyReqDto;
+import com.example.study.dto.response.StudyDashboardResDto;
 import com.example.study.dto.response.StudyInfoResDto;
 import com.example.study.dto.response.StudySummaryListResDto;
 import com.example.study.dto.response.UpdateStudyLeaderResDto;
@@ -100,4 +101,15 @@ public class StudyController {
 		return CustomResponse.onSuccess(resDto);
 	}
 	
+    @GetMapping("/{studyId}/dashboard")
+    // 특정 스터디 상세 조회 (대시보드)
+    public CustomResponse<StudyDashboardResDto> findStudyDashboard(
+            @CurrentUser MemberPrincipal principal,
+            @PathVariable("studyId") Long studyId,
+            // 대시보드 내 회차 조회 시 사용되는 페이징
+            @PageableDefault(page = 0, size = 5, sort = "startsAt", direction = Sort.Direction.DESC) Pageable pageable
+    ) {
+        StudyDashboardResDto resDto = studyQueryService.findStudyDashboard(principal.memberId(), studyId, pageable);
+        return CustomResponse.onSuccess(resDto);
+    }
 }

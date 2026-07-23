@@ -4,6 +4,8 @@ import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Optional;
 
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
@@ -37,6 +39,18 @@ public interface SessionRepository extends JpaRepository<Session, Long>{
 	""")
 	List<Session> findByMemberIdAndDateRange(@Param("memberId") Long memberId, @Param("start") LocalDateTime start, @Param("end") LocalDateTime end);
 	
+	// 특정 스터디의, 현재 시각 기준 가장 가깝게 예정된 회차를 조회
+	@Query("""
+			SELECT s FROM Session s
+			WHERE s.study.id = :studyId
+				AND s.startsAt > :now
+			ORDER BY s.startsAt ASC
+			""")
+	Optional<Session> findNextSessionByStudyId(
+		@Param("studyId") Long studyId,
+		@Param("now") LocalDateTime now
+	);
+	
 	// 각 스터디 아이디별로, 현재 시각 기준 가장 가깝게 예정된 회차를 조회 (studyId, startsAt 오름차순으로 한번에)
 	//	-> 서비스에서 각 스터디 아이디별 첫번째 값만 추릴 거임 (첫 번째 값이 가장 가깝게 예정된 회차)
 	@Query("""
@@ -48,6 +62,14 @@ public interface SessionRepository extends JpaRepository<Session, Long>{
 			""")
 	List<Session> findNextSessionsByStudyIds(
 			@Param("studyIds") List<Long> studyIds,
-			@Param("now") LocalDateTime now);
+			@Param("now") LocalDateTime now
+	);
 
+	// 특정 스터디에 속하는 회차 목록 페이징 조회
+	@Query("SELECT s FROM Session s WHERE s.study.id = :studyId")
+	Page<Session> findPageByStudyId(
+			@Param("studyId") Long studyId,
+			Pageable pageable
+	);
+	
 }
