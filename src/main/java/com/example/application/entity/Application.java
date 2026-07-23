@@ -56,5 +56,9 @@ public class Application extends BaseEntity {
     @Enumerated(EnumType.STRING)
     @Column(nullable = false, length = 20)
     private ApplicationStatus status;
+    
+    public void updateStatus(ApplicationStatus status) {
+    	this.status = status;
+    }
 
 }
