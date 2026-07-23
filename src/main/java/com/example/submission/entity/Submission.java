@@ -50,4 +50,7 @@ public class Submission extends BaseEntity {
     @Column(columnDefinition = "TEXT")
     private String content;
     
+    public void updateContent(String content) {
+    	this.content = content;
+    }
 }

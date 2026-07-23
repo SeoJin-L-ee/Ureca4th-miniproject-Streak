@@ -1,6 +1,8 @@
 package com.example.attendance.service;
 
+import java.time.LocalDate;
 import java.time.LocalDateTime;
+import java.time.temporal.ChronoUnit;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
@@ -167,7 +169,62 @@ public class AttendanceServiceImpl implements AttendanceService {
             attendanceRepository.saveAll(attendancesToSave);
         }
 	}
+	
+	// 멤버의 모든 참여 스터디를 통틀어 최장 연속 출석일을 계산 (마이페이지에서 사용)
+	@Override
+	public int getMyLongestStreak(Long memberId) {
+		List<Attendance> attendances = attendanceRepository.findAllByMemberIdOrderBySessionStartsAtAsc(memberId);
 
+		//스터디별로 나눠서 계산 - 다른 스터디의 같은 날/연속된 날짜 출석이 서로 섞이지 않도록 하기 위함
+		// ex) A스터디 화요일 출석, 수요일 결석 / B스터디 화요일 결석, 수요일 출석 = 연속 출석으로 반영될 수도 있음.
+		Map<Long, List<Attendance>> attendancesByStudy = attendances.stream().collect(Collectors.groupingBy(a -> a.getSession().getStudy().getId()));
+
+		int longest = 0;
+		for (List<Attendance> studyAttendances : attendancesByStudy.values()) {
+			int studyLongest = calculateLongestStreak(studyAttendances);
+
+			if (studyLongest > longest) {
+				longest = studyLongest;
+			}
+		}
+
+		return longest;
+	}
+
+	//한 스터디 안에서, 회차 시작일이 정확히 하루 차이일 때만 연속으로 인정해 최장 연속 출석일을 구한다.
+	private int calculateLongestStreak(List<Attendance> attendances) {
+		int longest = 0;
+		int current = 0;
+		LocalDate previousDate = null;
+
+		for (Attendance attendance : attendances) {
+			if (attendance.getStatus() != AttendanceStatus.PRESENT) {
+				current = 0;
+				previousDate = null;
+				continue;
+			}
+
+			LocalDate sessionDate = attendance.getSession().getStartsAt().toLocalDate();
+
+			if (previousDate == null) {
+				current = 1;
+			} else {
+				long gap = ChronoUnit.DAYS.between(previousDate, sessionDate);
+				if (gap == 1) {
+					current++;
+				} else if (gap > 1) {
+					current = 1;
+				}
+				// gap == 0(같은 날 두 번째 회차)이면 current를 그대로 둠
+			}
+
+			if (current > longest){ longest = current;}
+			previousDate = sessionDate;
+		}
+
+		return longest;
+	}
+	
 	// 출석률 비교 그래프 데이터 & 회차별 전체 출석률 & 회차별 내 출석 여부 한번에 조회
 	@Override
 	public AttendanceDashboardDataDto findAttendanceDashboardData(Long memberId, Long studyId, List<Long> sessionIds, LocalDateTime now) {
@@ -189,5 +246,4 @@ public class AttendanceServiceImpl implements AttendanceService {
 		
 		return new AttendanceDashboardDataDto(comparisonDto, teamRate, myStatus);
 	}
-	
 }
