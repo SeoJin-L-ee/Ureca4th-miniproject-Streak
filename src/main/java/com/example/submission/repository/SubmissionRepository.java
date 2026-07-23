@@ -18,8 +18,4 @@ public interface SubmissionRepository extends JpaRepository<Submission, Long>{
 			AND s.member.id = :memberId
 	""")
 	List<Long> findSubmittedAssignmentIdsBySessionIdAndMemberId(@Param("sessionId") Long sessionId, @Param("memberId") Long memberId);
-	
-	//마이페이지 - 이미 제출한 과제 걸러내기, 모든 스터디에 대한 내가 제출한 모든 과제 ID 조회
-	@Query("SELECT s.assignment.id FROM Submission s WHERE s.member.id = :memberId")
-	List<Long> findSubmittedAssignmentIdsByMemberId(@Param("memberId") Long memberId);
 }

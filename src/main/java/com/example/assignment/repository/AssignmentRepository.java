@@ -30,15 +30,21 @@ public interface AssignmentRepository extends JpaRepository<Assignment, Long>{
 	""")
 	List<Assignment> findByMemberIdAndDateRange(@Param("memberId") Long memberId, @Param("start") LocalDateTime start, @Param("end") LocalDateTime end);
 	
-	//마이페이지 - 마감 기한 과제 조회용. 내가 참여 중인 스터디들의, 마감이 아직 안 지난 과제만 마감일 오름차순으로.
+	//마이페이지 - 마감 기한 과제 조회용. 내가 참여 중인 스터디들의, 마감이 아직 안 지난 과제 중 내가 아직 제출하지 않은 것만 마감일 오름차순으로.
 	// session/study를 같이 fetch해서 이후 스터디 제목을 꺼낼 때 N+1이 발생하지 않도록
+	// NOT EXISTS로 제출한 과제가 있는지 체크
 	@Query("""
 			SELECT a FROM Assignment a
 			JOIN FETCH a.session s
 			JOIN FETCH s.study
 			WHERE s.study.id IN (SELECT p.study.id FROM Participant p WHERE p.member.id = :memberId)
 			AND a.dueAt >= :now
+			AND NOT EXISTS (
+				SELECT 1 FROM Submission sub
+				WHERE sub.assignment.id = a.id
+				AND sub.member.id = :memberId
+			)
 			ORDER BY a.dueAt asc
 			""")
-	List<Assignment> findUpcomingByMemberId(@Param("memberId") Long memberId, @Param("now") LocalDateTime now);
+	List<Assignment> findUpcomingAndNotSubmittedByMemberId(@Param("memberId") Long memberId, @Param("now") LocalDateTime now);
 }

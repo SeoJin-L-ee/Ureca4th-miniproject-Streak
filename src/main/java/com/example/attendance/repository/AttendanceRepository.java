@@ -38,7 +38,18 @@ public interface AttendanceRepository extends JpaRepository<Attendance, Long>{
 			@Param("now") LocalDateTime now,
 			@Param("presentStatus") AttendanceStatus presentStatus);
 	
-	//마이페이지 - 평균 출석률/최장 Streak 계산용. 회차 시작 시간(session.startsAt) 오름차순 정렬
-	@Query("SELECT a FROM Attendance a JOIN FETCH a.session WHERE a.member.id = :memberId ORDER BY a.session.startsAt ASC")
+	//마이페이지 - 최장 Streak 계산용. 회차 시작 시간(session.startsAt) 오름차순 정렬
+	@Query("""
+			SELECT a FROM Attendance a
+			JOIN FETCH a.session
+			WHERE a.member.id = :memberId
+			ORDER BY a.session.startsAt asc
+			""")
 	List<Attendance> findAllByMemberIdOrderBySessionStartsAtAsc(@Param("memberId") Long memberId);
+
+	//마이페이지 - 평균 출석률 계산용. 전체 출석 대상 회차 수
+	long countByMemberId(Long memberId);
+
+	//마이페이지 - 평균 출석률 계산용. 그중 특정 상태(PRESENT)로 카운트된 횟수
+	long countByMemberIdAndStatus(Long memberId, AttendanceStatus status);
 }
