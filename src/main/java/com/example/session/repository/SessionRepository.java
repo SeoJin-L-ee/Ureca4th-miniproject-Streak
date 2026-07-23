@@ -2,6 +2,7 @@ package com.example.session.repository;
 
 import java.time.LocalDateTime;
 import java.util.List;
+import java.util.Optional;
 
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
@@ -22,6 +23,10 @@ public interface SessionRepository extends JpaRepository<Session, Long>{
 	// 해당 스터디에 존재하는 회차인지 검증 
 	boolean existsByIdAndStudyId(Long sessionId, Long studyId);
 	
+
+	// 해당 스터디에 존재하는 회차 가져오기 
+	Optional<Session> findByIdAndStudyId(Long sessionId, Long studyId);
+
 	// 특정 기간동안 멤버의 회차 조회 
 	@Query("""
 			SELECT DISTINCT s
@@ -32,4 +37,5 @@ public interface SessionRepository extends JpaRepository<Session, Long>{
 				AND s.startsAt BETWEEN :start AND :end
 	""")
 	List<Session> findByMemberIdAndDateRange(@Param("memberId") Long memberId, @Param("start") LocalDateTime start, @Param("end") LocalDateTime end);
+
 }
