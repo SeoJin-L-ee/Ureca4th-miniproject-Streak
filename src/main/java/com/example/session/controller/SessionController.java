@@ -38,7 +38,7 @@ public class SessionController {
 			@CurrentUser MemberPrincipal principal,
 			@RequestBody CreateSessionReqDto reqDto
 	){
-		SessionResDto resDto = sessionService.createSession(studyId, principal.getMemberId(), reqDto);
+		SessionResDto resDto = sessionService.createSession(studyId, principal.memberId(), reqDto);
 		return CustomResponse.onSuccess(HttpStatus.CREATED, resDto);
 	}
 	
@@ -50,7 +50,7 @@ public class SessionController {
 			@CurrentUser MemberPrincipal principal,
 			@RequestBody UpdateSessionReqDto reqDto
 	){
-		SessionResDto resDto = sessionService.updateSession(studyId, sessionId, principal.getMemberId(), reqDto); 
+		SessionResDto resDto = sessionService.updateSession(studyId, sessionId, principal.memberId(), reqDto); 
 		return CustomResponse.onSuccess(resDto);
 	}
 	
@@ -61,7 +61,7 @@ public class SessionController {
 			@PathVariable("sessionId") Long sessionId,
 			@CurrentUser MemberPrincipal principal
 	){
-		sessionService.deleteSession(studyId, sessionId, principal.getMemberId());
+		sessionService.deleteSession(studyId, sessionId, principal.memberId());
 		return CustomResponse.onSuccess(null);
 	}
 	
@@ -72,7 +72,7 @@ public class SessionController {
 			@PathVariable("sessionId") Long sessionId,
 			@CurrentUser MemberPrincipal principal
 	){
-		SessionInfoResDto resDto = sessionService.detailSession(studyId, sessionId, principal.getMemberId());
+		SessionInfoResDto resDto = sessionService.detailSession(studyId, sessionId, principal.memberId());
 		return CustomResponse.onSuccess(resDto);
 	}
 	
@@ -82,7 +82,7 @@ public class SessionController {
 			@PathVariable("studyId") Long studyId, 
 			@CurrentUser MemberPrincipal principal
 	){
-		List<SessionListResDto> resDto = sessionService.listSession(studyId, principal.getMemberId());
+		List<SessionListResDto> resDto = sessionService.listSession(studyId, principal.memberId());
 		return CustomResponse.onSuccess(resDto);
 	}
 }

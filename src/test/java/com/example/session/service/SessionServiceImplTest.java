@@ -92,7 +92,6 @@ public class SessionServiceImplTest {
 
         study = studyRepository.save(
                 Study.builder()
-                        .creater(member)
                         .title("스터디 제목")
                         .description("설명")
                         .capacity(10)
@@ -359,7 +358,6 @@ public class SessionServiceImplTest {
 	    // 다른 스터디 생성
 	    Study anotherStudy = studyRepository.save(
 	        Study.builder()
-	            .creater(member)
 	            .title("다른 스터디")
 	            .description("설명")
 	            .capacity(5)

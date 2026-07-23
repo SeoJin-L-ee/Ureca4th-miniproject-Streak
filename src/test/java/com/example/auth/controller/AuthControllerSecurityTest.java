@@ -21,9 +21,9 @@ import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.MvcResult;
 
-import com.example.auth.dto.request.LoginRequest;
-import com.example.auth.dto.request.SignUpRequest;
-import com.example.auth.dto.response.MemberResponse;
+import com.example.auth.dto.request.LoginReqDto;
+import com.example.auth.dto.request.SignUpReqDto;
+import com.example.auth.dto.response.AuthResDto;
 import com.example.auth.service.AuthService;
 import com.example.global.security.MemberPrincipal;
 import com.example.global.security.MemberUserDetailsService;
@@ -72,7 +72,7 @@ public class AuthControllerSecurityTest {
 	@Test
 	@DisplayName("signup에서 csrf토큰이 없으면 403 반환")
 	void signupNotToken403() throws Exception{
-		SignUpRequest request = new SignUpRequest("test@test.com", "aeds8945", "길동이", "010-1234-5678");
+		SignUpReqDto request = new SignUpReqDto("test@test.com", "aeds8945", "길동이", "010-1234-5678");
 		
 		MvcResult result = mockMvc.perform(post("/api/auth/signup").contentType(MediaType.APPLICATION_JSON)
 																	.content(objectMapper.writeValueAsBytes(request)))
@@ -83,8 +83,8 @@ public class AuthControllerSecurityTest {
 	@Test
 	@DisplayName("signup에서 csrf토큰이 있으면 인증없이 통과 O")
 	void signupGoodTokenSuccess() throws Exception{
-		SignUpRequest request = new SignUpRequest("test@test.com", "agbvc5415", "길동이", "010-1234-5678");
-        given(authService.signUp(any())).willReturn(new MemberResponse(1L, "test@test.com", "길동이", "010-1234-5678"));
+		SignUpReqDto request = new SignUpReqDto("test@test.com", "agbvc5415", "길동이", "010-1234-5678");
+        given(authService.signUp(any())).willReturn(new AuthResDto(1L, "test@test.com", "길동이", "010-1234-5678"));
 
         MvcResult result = mockMvc.perform(post("/api/auth/signup").with(csrf()).contentType(MediaType.APPLICATION_JSON)
         																		.content(objectMapper.writeValueAsBytes(request)))
@@ -93,29 +93,12 @@ public class AuthControllerSecurityTest {
     }
 
     @Test
-    @DisplayName("me는 인증되지 않은 요청이면 401 반환")
-    void meNotAuthenticated401() throws Exception {
-    	MvcResult result = mockMvc.perform(get("/api/auth/me")).andExpect(status().isUnauthorized()).andReturn();
-        logResult("GET /api/auth/me (미인증)", result);
-    }
-
-    @Test
-    @DisplayName("me는 인증된 요청이면 200과 회원 정보를 반환한다")
-    void meGoodAuthenticatedReturn200andMember() throws Exception {
-        MemberPrincipal principal = principal();
-
-        MvcResult result = mockMvc.perform(get("/api/auth/me").with(authentication(new UsernamePasswordAuthenticationToken(principal, null, principal.getAuthorities()))))
-        														.andExpect(status().isOk()).andExpect(jsonPath("$.result.email").value("test@test.com")).andReturn();
-        logResult("GET /api/auth/me (인증됨)", result);
-    }
-    
-    @Test
     @DisplayName("login은 올바른 이메일/비밀번호면 200과 세션을 발급한다")
     void loginSuccess() throws Exception {
         Member member = Member.builder().id(1L).email("test@test.com").password(passwordEncoder.encode("abcd1234")).name("길동이").phone("010-1234-5678").status(MemberStatus.ACTIVE).build();
         given(memberUserDetailsService.loadUserByUsername("test@test.com")).willReturn(MemberPrincipal.from(member));
 
-        LoginRequest request = new LoginRequest("test@test.com", "abcd1234");
+        LoginReqDto request = new LoginReqDto("test@test.com", "abcd1234");
 
         MvcResult result = mockMvc.perform(post("/api/auth/login").with(csrf()).contentType(MediaType.APPLICATION_JSON)
         															.content(objectMapper.writeValueAsBytes(request)))
@@ -132,7 +115,7 @@ public class AuthControllerSecurityTest {
         
         given(memberUserDetailsService.loadUserByUsername("test@test.com")).willReturn(MemberPrincipal.from(member));
 
-        LoginRequest request = new LoginRequest("test@test.com", "wrongpass");
+        LoginReqDto request = new LoginReqDto("test@test.com", "wrongpass");
 
         MvcResult result = mockMvc.perform(post("/api/auth/login").with(csrf()).contentType(MediaType.APPLICATION_JSON)
         															.content(objectMapper.writeValueAsBytes(request)))

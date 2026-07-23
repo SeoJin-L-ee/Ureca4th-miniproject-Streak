@@ -9,12 +9,16 @@ import org.springframework.data.repository.query.Param;
 
 import com.example.attendance.entity.Attendance;
 import com.example.attendance.entity.enums.AttendanceStatus;
+
 import com.example.study.dto.response.StudyAttendanceRateDto;
 
 public interface AttendanceRepository extends JpaRepository<Attendance, Long>{
 	
 	// 특정 회차의 출석 목록 조회 
 	List<Attendance> findAllBySessionId(Long sessionId);
+	
+	// Member 별 스터디 참석/미참석 횟수 count
+	int countBySessionStudyIdAndMemberIdAndStatus(Long studyId, Long memberId, AttendanceStatus status);  
 	
 	// 여러 스터디의 지나간 회차들에 대한 출석률을 GROUP BY로 집계 (Dto 하나 새로 만들어서 거기다가 프로젝션함)
     // 출석(PRESENT)인 경우에만 카운트해서, 전체 회차 수로 나눔
@@ -33,4 +37,5 @@ public interface AttendanceRepository extends JpaRepository<Attendance, Long>{
 			@Param("studyIds") List<Long> studyIds,
 			@Param("now") LocalDateTime now,
 			@Param("presentStatus") AttendanceStatus presentStatus);
+
 }
