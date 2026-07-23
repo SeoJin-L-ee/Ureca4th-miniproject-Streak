@@ -23,6 +23,8 @@ public interface ParticipantRepository extends JpaRepository<Participant, Long> 
 	// 해당 Study 에 참여한 Member만 스터디 회차를 조회할 수 있도록 검증 
 	boolean existsByStudyIdAndMemberId(Long studyId, Long memberId);
 	
+	long countByStudyId(Long studyId);
+	
 	// 스터디에 참여한 모든 member 조회 
 	List<Participant> findAllByStudyId(Long studyId);
 	
@@ -43,7 +45,6 @@ public interface ParticipantRepository extends JpaRepository<Participant, Long> 
 	// 이후 연결된 Member 내부 필드를 얻어야 할 때 N+1 방지 목적
 	@Query("SELECT p FROM Participant p JOIN FETCH p.member WHERE p.study.id = :studyId AND p.member.id = :memberId")
     Optional<Participant> findByStudyIdAndMemberIdFetchJoinMember(@Param("studyId") Long studyId, @Param("memberId") Long memberId);
-
 
 	// 사용자가 참여 중인 스터디 목록 조회 시 사용 (isLeader 필드를 얻기 위해 Study 가 아닌 Participants 조회)
 	// 	-> Study 도 함께 가져오기 위해 Join fetch + Pageable 을 함께 사용하면,
@@ -70,4 +71,3 @@ public interface ParticipantRepository extends JpaRepository<Participant, Long> 
 			""")
 	List<Participant> findAllByMemberIdFetchStudy(@Param("memberId") Long memberId);
 }
-

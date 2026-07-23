@@ -1,7 +1,5 @@
 package com.example.session.controller;
 
-import java.util.List;
-
 import org.springframework.http.HttpStatus;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -18,7 +16,6 @@ import com.example.global.security.MemberPrincipal;
 import com.example.session.dto.request.CreateSessionReqDto;
 import com.example.session.dto.request.UpdateSessionReqDto;
 import com.example.session.dto.response.SessionInfoResDto;
-import com.example.session.dto.response.SessionListResDto;
 import com.example.session.dto.response.SessionResDto;
 import com.example.session.service.SessionService;
 
@@ -76,13 +73,4 @@ public class SessionController {
 		return CustomResponse.onSuccess(resDto);
 	}
 	
-	// 스터디 회차 목록 조회 
-	@GetMapping("/studies/{studyId}/sessions")
-	public CustomResponse<List<SessionListResDto>> listSession(
-			@PathVariable("studyId") Long studyId, 
-			@CurrentUser MemberPrincipal principal
-	){
-		List<SessionListResDto> resDto = sessionService.listSession(studyId, principal.memberId());
-		return CustomResponse.onSuccess(resDto);
-	}
 }

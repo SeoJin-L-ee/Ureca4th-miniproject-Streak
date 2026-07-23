@@ -18,7 +18,7 @@ public interface ApplicationRepository extends JpaRepository<Application, Long> 
 			WHERE a.applicant.id = :memberId
 			""")
 	List<Application> findAllByApplicantId(@Param("memberId") Long memberId);
-
+	
 	//마이페이지 - 스터디 지원 현황 조회용 - '?status=' 로 필터링할 때
 	@Query("""
 			SELECT a FROM Application a
@@ -27,4 +27,7 @@ public interface ApplicationRepository extends JpaRepository<Application, Long> 
 			AND a.status = :status
 			""")
 	List<Application> findAllByApplicantIdAndStatus(@Param("memberId") Long memberId, @Param("status") ApplicationStatus status);
+	
+	// 대기 지원자 수 카운트 (넘어오는 ApplicationStatus는 PENDING임)
+	long countByStudyIdAndStatus(Long studyId, ApplicationStatus status);
 }

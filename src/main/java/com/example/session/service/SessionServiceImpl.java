@@ -1,9 +1,14 @@
 package com.example.session.service;
 
+import java.time.LocalDateTime;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
 
 import com.example.assignment.entity.Assignment;
@@ -21,9 +26,10 @@ import com.example.session.dto.request.CreateSessionReqDto;
 import com.example.session.dto.request.UpdateSessionReqDto;
 import com.example.session.dto.response.SessionAssignmentResDto;
 import com.example.session.dto.response.SessionAttendanceResDto;
+import com.example.session.dto.response.SessionDashboardDataDto;
 import com.example.session.dto.response.SessionInfoResDto;
-import com.example.session.dto.response.SessionListResDto;
 import com.example.session.dto.response.SessionResDto;
+import com.example.session.dto.response.SessionSummaryResDto;
 import com.example.session.entity.Session;
 import com.example.session.exception.code.SessionErrorCode;
 import com.example.session.repository.SessionRepository;
@@ -171,19 +177,23 @@ public class SessionServiceImpl implements SessionService {
 	}
 
 
-	// 스터디 회차 목록 조회 
+	// 가까운 다음 회차 & 전체 회차 목록 한번에 조회
 	@Override
-	public List<SessionListResDto> listSession(long studyId, long memberId) {
+	public SessionDashboardDataDto findSessionDashboardData(long studyId, LocalDateTime now, Pageable pageable) {
+		SessionSummaryResDto nextSession = sessionRepository.findNextSessionByStudyId(studyId, now)
+				.map(SessionConverter::toSessionSummaryResDto)
+				.orElse(null);
 		
-		// 해당 Study 에 참여한 Member만 스터디 회차를 조회할 수 있도록 검증
-		if (!participantRepository.existsByStudyIdAndMemberId(studyId, memberId)) {
-			throw new GeneralException(CommonErrorCode.FORBIDDEN);
-		}
+		// 요청 Pageable 의 정렬조건과 관계없이, 무조건 최근 회차 순으로 조회하도록 구현 (가장 가까운 다음 회차기 때문에)
+		Pageable pageable2 = PageRequest.of(
+				pageable.getPageNumber(),
+				pageable.getPageSize(),
+				Sort.by(Sort.Direction.DESC, "startsAt"));
 		
-		List<Session> sessions = sessionRepository.findAllByStudyIdOrderBySessionNumberDesc(studyId);
+		Page<SessionSummaryResDto> sessionPage = sessionRepository.findPageByStudyId(studyId, pageable2)
+				.map(SessionConverter::toSessionSummaryResDto);
 		
-		return sessions.stream()
-				.map(SessionConverter::toSessionListResDto)
-				.toList();
+		return new SessionDashboardDataDto(nextSession, sessionPage);
 	}
+	
 }

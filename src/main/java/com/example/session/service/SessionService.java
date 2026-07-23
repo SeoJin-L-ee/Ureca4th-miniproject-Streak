@@ -1,11 +1,13 @@
 package com.example.session.service;
 
-import java.util.List;
+import java.time.LocalDateTime;
+
+import org.springframework.data.domain.Pageable;
 
 import com.example.session.dto.request.CreateSessionReqDto;
 import com.example.session.dto.request.UpdateSessionReqDto;
+import com.example.session.dto.response.SessionDashboardDataDto;
 import com.example.session.dto.response.SessionInfoResDto;
-import com.example.session.dto.response.SessionListResDto;
 import com.example.session.dto.response.SessionResDto;
 
 public interface SessionService {
@@ -23,5 +25,6 @@ public interface SessionService {
 	SessionInfoResDto detailSession(long studyId, long sessionId, long memberId);
 	
 	// 스터디 회차 목록 조회 
-	List<SessionListResDto> listSession(long studyId, long memberId);
+	SessionDashboardDataDto findSessionDashboardData(long studyId, LocalDateTime now, Pageable pageable);
+	
 }

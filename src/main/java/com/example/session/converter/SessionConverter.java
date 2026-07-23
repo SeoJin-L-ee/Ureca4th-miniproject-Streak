@@ -6,8 +6,8 @@ import com.example.session.dto.request.CreateSessionReqDto;
 import com.example.session.dto.response.SessionAssignmentResDto;
 import com.example.session.dto.response.SessionAttendanceResDto;
 import com.example.session.dto.response.SessionInfoResDto;
-import com.example.session.dto.response.SessionListResDto;
 import com.example.session.dto.response.SessionResDto;
+import com.example.session.dto.response.SessionSummaryResDto;
 import com.example.session.entity.Session;
 import com.example.study.entity.Study;
 
@@ -59,13 +59,15 @@ public class SessionConverter {
 				
 	}
 	
-	// 스터디 회차 목록 조회 응답 DTO 변환 (Session -> SessionListResDto)
-	public static SessionListResDto toSessionListResDto(Session session) {
-		return new SessionListResDto(
+	// Session -> SessionSummaryResDto
+	public static SessionSummaryResDto toSessionSummaryResDto(Session session) {
+		if (session == null) return null;
+        return new SessionSummaryResDto(
                 session.getId(),
                 session.getSessionNumber(),
                 session.getStartsAt(),
                 session.getTitle()
         );
-	}
+    }
+	
 }
