@@ -94,7 +94,7 @@ export default function CalendarPage() {
                     key={i}
                     onClick={() => setSelectedDate(dateStr)}
                     className={`flex h-20 flex-col items-center rounded-xl border p-1.5 text-left transition-colors ${
-                      isSelected ? "border-brand-400 bg-brand-50" : "border-transparent hover:bg-gray-50"
+                      isSelected ? "border-brand-400 bg-brand-50" : "border-gray-100 hover:bg-gray-50"
                     }`}
                   >
                     <span
@@ -130,7 +130,11 @@ export default function CalendarPage() {
               {selectedEvents.map((e) => (
                 <li key={`${e.type}-${e.id}`}>
                   <Link
-                    to={e.type === "SESSION" ? `/studies/${e.studyId}/sessions/${e.id}` : `/studies/${e.studyId}`}
+                    to={
+                      e.type === "SESSION"
+                        ? `/studies/${e.studyId}/sessions/${e.id}`
+                        : `/studies/${e.studyId}/sessions/${e.sessionId}/assignments/${e.id}`
+                    }
                     className="block rounded-xl border border-gray-100 p-3 hover:bg-gray-50"
                   >
                     <p className="flex items-center gap-1.5 text-sm font-semibold text-gray-800">

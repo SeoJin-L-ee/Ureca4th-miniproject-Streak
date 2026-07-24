@@ -322,6 +322,7 @@ export interface CalendarItemResDto {
   type: "SESSION" | "ASSIGNMENT";
   id: number;
   studyId: number;
+  sessionId: number;
   studyTitle: string;
   title: string;
   date: string;

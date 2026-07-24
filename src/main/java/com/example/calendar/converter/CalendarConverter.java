@@ -12,6 +12,7 @@ public class CalendarConverter {
             "SESSION",
             session.getId(),
             session.getStudy().getId(),
+            session.getId(),
             session.getStudy().getTitle(),
             session.getTitle(),
             session.getStartsAt()
@@ -24,6 +25,7 @@ public class CalendarConverter {
             "ASSIGNMENT",
             assignment.getId(),
             assignment.getSession().getStudy().getId(),
+            assignment.getSession().getId(),
             assignment.getSession().getStudy().getTitle(),
             assignment.getTitle(),
             assignment.getDueAt()

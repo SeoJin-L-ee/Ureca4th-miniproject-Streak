@@ -90,7 +90,7 @@ export default function StudyExplore() {
         </div>
 
         <div className="flex flex-wrap items-center gap-3">
-          <div className="relative flex-1 min-w-[220px]">
+          <div className="relative w-full sm:w-56">
             <Search size={16} className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
             <input
               value={query}
@@ -99,7 +99,7 @@ export default function StudyExplore() {
               className="w-full rounded-xl border border-gray-200 bg-white py-2.5 pl-9 pr-3 text-sm focus:border-brand-400 focus:outline-none"
             />
           </div>
-          <div className="flex flex-wrap gap-1.5">
+          <div className="flex flex-1 flex-wrap gap-1.5">
             {categoryOptions.map((c) => (
               <button
                 key={c.value}
@@ -167,7 +167,7 @@ export default function StudyExplore() {
 
             {detail.isLeader ? (
               <div className="rounded-xl bg-gray-50 px-4 py-3 text-center text-sm font-medium text-gray-500">
-                내가 스터디장인 스터디예요.
+                내가 개설한 스터디예요.
               </div>
             ) : detail.myStatus === "ACCEPTED" ? (
               <div className="rounded-xl bg-emerald-50 px-4 py-3 text-center text-sm font-medium text-emerald-700">

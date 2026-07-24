@@ -68,7 +68,7 @@ export default function MyPage() {
         </Card>
 
         <section>
-          <h3 className="mb-3 text-sm font-semibold text-gray-500">1. 상단 개인 요약</h3>
+          <h3 className="mb-3 text-sm font-semibold text-gray-500">나의 활동 요약</h3>
           <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
             <StatTile
               icon={<Users size={20} className="text-brand-600" />}
@@ -101,8 +101,39 @@ export default function MyPage() {
         </section>
 
         <section>
-          <h3 className="mb-3 text-sm font-semibold text-gray-500">2. 오늘의 할 일</h3>
+          <h3 className="mb-3 text-sm font-semibold text-gray-500">오늘의 할 일</h3>
           <div className="grid grid-cols-1 gap-4 lg:grid-cols-2">
+            <Card title="오늘 예정 회차" className="flex h-full flex-col">
+              <div className="flex flex-1 flex-col">
+                <ul className="flex-1 space-y-3">
+                  {data.todaySessions.length === 0 && (
+                    <p className="flex items-center gap-2 text-sm text-gray-400">
+                      <Clock size={16} /> 오늘 예정된 회차가 없어요.
+                    </p>
+                  )}
+                  {data.todaySessions.map((s) => (
+                    <li key={s.sessionId}>
+                      <Link
+                        to={`/studies/${s.studyId}`}
+                        className="flex items-center justify-between rounded-xl border border-gray-100 px-3 py-2.5 hover:bg-gray-50"
+                      >
+                        <div className="min-w-0">
+                          <p className="truncate text-sm font-medium text-gray-800">
+                            {s.studyTitle} · {s.title}
+                          </p>
+                          <p className="truncate text-xs text-gray-400">{formatTime(s.startsAt)}</p>
+                        </div>
+                        <CalendarClock size={16} className="shrink-0 text-brand-500" />
+                      </Link>
+                    </li>
+                  ))}
+                </ul>
+                <Link to="/members/me/calendar" className="mt-3 flex items-center justify-center gap-1 text-sm font-medium text-brand-600">
+                  캘린더 전체 보기 <ChevronRight size={14} />
+                </Link>
+              </div>
+            </Card>
+
             <Card title="마감 임박 과제 TOP 3">
               <ul className="space-y-3">
                 {data.deadlineAssignments.length === 0 && <p className="text-sm text-gray-400">마감 임박 과제가 없어요.</p>}
@@ -126,44 +157,12 @@ export default function MyPage() {
                   );
                 })}
               </ul>
-              <Link to="/studies" className="mt-3 flex items-center justify-center gap-1 text-sm font-medium text-brand-600">
-                과제 전체 보기 <ChevronRight size={14} />
-              </Link>
-            </Card>
-
-            <Card title="오늘 예정 회차">
-              <ul className="space-y-3">
-                {data.todaySessions.length === 0 && (
-                  <p className="flex items-center gap-2 text-sm text-gray-400">
-                    <Clock size={16} /> 오늘 예정된 회차가 없어요.
-                  </p>
-                )}
-                {data.todaySessions.map((s) => (
-                  <li key={s.sessionId}>
-                    <Link
-                      to={`/studies/${s.studyId}`}
-                      className="flex items-center justify-between rounded-xl border border-gray-100 px-3 py-2.5 hover:bg-gray-50"
-                    >
-                      <div className="min-w-0">
-                        <p className="truncate text-sm font-medium text-gray-800">
-                          {s.studyTitle} · {s.title}
-                        </p>
-                        <p className="truncate text-xs text-gray-400">{formatTime(s.startsAt)}</p>
-                      </div>
-                      <CalendarClock size={16} className="shrink-0 text-brand-500" />
-                    </Link>
-                  </li>
-                ))}
-              </ul>
-              <Link to="/members/me/calendar" className="mt-3 flex items-center justify-center gap-1 text-sm font-medium text-brand-600">
-                캘린더 전체 보기 <ChevronRight size={14} />
-              </Link>
             </Card>
           </div>
         </section>
 
         <section>
-          <h3 className="mb-3 text-sm font-semibold text-gray-500">3. 나의 지원 현황</h3>
+          <h3 className="mb-3 text-sm font-semibold text-gray-500">나의 지원 현황</h3>
           <Card>
             <div className="mb-4 flex gap-1 rounded-xl bg-gray-50 p-1">
               {tabs.map((t) => (
