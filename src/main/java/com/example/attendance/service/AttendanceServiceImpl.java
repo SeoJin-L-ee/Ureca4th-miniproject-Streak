@@ -51,6 +51,7 @@ public class AttendanceServiceImpl implements AttendanceService {
 
 	// 스터디 내 참여자별 출석 현황 조회 
 	@Override
+	@Transactional(readOnly = true)
 	public AttendanceListResDto getMemberAttendances(long studyId, long memberId) {
 		
 		// 해당 Study 에 참여한 Member만 스터디 회차를 조회할 수 있도록 검증
@@ -93,6 +94,7 @@ public class AttendanceServiceImpl implements AttendanceService {
 	
 	// 회차별 참여자 출석 목록 조회 
 	@Override
+	@Transactional(readOnly = true)
 	public AttendanceSessionResDto getSessionAttendances(long studyId, long sessionId, long memberId) {
 		
 		if (!studyRepository.existsById(studyId)) throw new GeneralException(StudyErrorCode.STUDY_NOT_FOUND);
@@ -172,6 +174,7 @@ public class AttendanceServiceImpl implements AttendanceService {
 	
 	// 멤버의 모든 참여 스터디를 통틀어 최장 연속 출석일을 계산 (마이페이지에서 사용)
 	@Override
+	@Transactional(readOnly = true)
 	public int getMyLongestStreak(Long memberId) {
 		List<Attendance> attendances = attendanceRepository.findAllByMemberIdOrderBySessionStartsAtAsc(memberId);
 
@@ -227,6 +230,7 @@ public class AttendanceServiceImpl implements AttendanceService {
 	
 	// 출석률 비교 그래프 데이터 & 회차별 전체 출석률 & 회차별 내 출석 여부 한번에 조회
 	@Override
+	@Transactional(readOnly = true)
 	public AttendanceDashboardDataDto findAttendanceDashboardData(Long memberId, Long studyId, List<Long> sessionIds, LocalDateTime now) {
 		// 출석률 비교 그래프 데이터 조회
 		Double totalAverage = attendanceRepository.calculateStudyAttendanceRateByStudyId(studyId, now, AttendanceStatus.PRESENT);
