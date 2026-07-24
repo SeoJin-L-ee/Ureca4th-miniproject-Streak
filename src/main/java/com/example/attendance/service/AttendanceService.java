@@ -1,6 +1,10 @@
 package com.example.attendance.service;
 
+import java.time.LocalDateTime;
+import java.util.List;
+
 import com.example.attendance.dto.request.BatchSaveAttendanceReqDto;
+import com.example.attendance.dto.response.AttendanceDashboardDataDto;
 import com.example.attendance.dto.response.AttendanceListResDto;
 import com.example.attendance.dto.response.AttendanceSessionResDto;
 
@@ -14,7 +18,11 @@ public interface AttendanceService {
 	
 	// 참여자 출석 사항 저장
 	void updateSessionAttendances(long studyId, long sessionId, long memberId, BatchSaveAttendanceReqDto reqDto);
-
-	//멤버의 모든 참여 스터디를 통틀어 최장 연속 출석일을 계산 (마이페이지에서 사용)
+	
+	// 멤버의 모든 참여 스터디를 통틀어 최장 연속 출석일을 계산 (마이페이지에서 사용)
 	int getMyLongestStreak(Long memberId);
+	
+	// 출석률 비교 그래프 데이터 & 회차별 내 출석 여부 & 회차별 전체 출석률 한번에 조회
+	AttendanceDashboardDataDto findAttendanceDashboardData(Long memberId, Long studyId, List<Long> sessionIds, LocalDateTime now);
+
 }

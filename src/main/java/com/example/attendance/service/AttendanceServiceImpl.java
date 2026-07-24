@@ -1,6 +1,7 @@
 package com.example.attendance.service;
 
 import java.time.LocalDate;
+import java.time.LocalDateTime;
 import java.time.temporal.ChronoUnit;
 import java.util.ArrayList;
 import java.util.List;
@@ -12,10 +13,14 @@ import org.springframework.stereotype.Service;
 import com.example.attendance.converter.AttendanceConverter;
 import com.example.attendance.dto.request.BatchSaveAttendanceReqDto;
 import com.example.attendance.dto.request.UpdateAttendanceReqDto;
+import com.example.attendance.dto.response.AttendanceDashboardDataDto;
 import com.example.attendance.dto.response.AttendanceListResDto;
 import com.example.attendance.dto.response.AttendanceMemberResDto;
 import com.example.attendance.dto.response.AttendanceParticipantResDto;
+import com.example.attendance.dto.response.AttendanceRateComparisonDto;
 import com.example.attendance.dto.response.AttendanceSessionResDto;
+import com.example.attendance.dto.response.MemberSessionAttendanceDto;
+import com.example.attendance.dto.response.SessionAttendanceRateDto;
 import com.example.attendance.entity.Attendance;
 import com.example.attendance.entity.enums.AttendanceStatus;
 import com.example.attendance.repository.AttendanceRepository;
@@ -164,8 +169,7 @@ public class AttendanceServiceImpl implements AttendanceService {
             attendanceRepository.saveAll(attendancesToSave);
         }
 	}
-
-
+	
 	// 멤버의 모든 참여 스터디를 통틀어 최장 연속 출석일을 계산 (마이페이지에서 사용)
 	@Override
 	public int getMyLongestStreak(Long memberId) {
@@ -219,5 +223,27 @@ public class AttendanceServiceImpl implements AttendanceService {
 		}
 
 		return longest;
+	}
+	
+	// 출석률 비교 그래프 데이터 & 회차별 전체 출석률 & 회차별 내 출석 여부 한번에 조회
+	@Override
+	public AttendanceDashboardDataDto findAttendanceDashboardData(Long memberId, Long studyId, List<Long> sessionIds, LocalDateTime now) {
+		// 출석률 비교 그래프 데이터 조회
+		Double totalAverage = attendanceRepository.calculateStudyAttendanceRateByStudyId(studyId, now, AttendanceStatus.PRESENT);
+		Double myAverage = attendanceRepository.calculateMemberAttendanceRate(studyId, memberId, now, AttendanceStatus.PRESENT);
+		AttendanceRateComparisonDto comparisonDto = new AttendanceRateComparisonDto(totalAverage, myAverage);
+		
+		if (sessionIds.isEmpty()) return new AttendanceDashboardDataDto(comparisonDto, Map.of(), Map.of());
+		
+		// 회차별 전체 출석률
+		Map<Long, Double> teamRate = attendanceRepository
+				.calculateSessionAttendanceRatesBySessionIds(sessionIds, now, AttendanceStatus.PRESENT).stream()
+				.collect(Collectors.toMap(SessionAttendanceRateDto::sessionId, SessionAttendanceRateDto::attendanceRate));		
+				
+		// 회차별 나의 출석 여부
+		Map<Long, AttendanceStatus> myStatus = attendanceRepository.findSessionAttendanceStatusesByMemberId(memberId, sessionIds).stream()
+				.collect(Collectors.toMap(MemberSessionAttendanceDto::sessionId, MemberSessionAttendanceDto::status));
+		
+		return new AttendanceDashboardDataDto(comparisonDto, teamRate, myStatus);
 	}
 }
