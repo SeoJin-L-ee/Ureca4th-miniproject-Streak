@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
-import { Users, TrendingUp, Flame, Clock, CalendarClock, LogOut, ChevronRight } from "lucide-react";
+import { Users, TrendingUp, Flame, Clock, CalendarClock, LogOut, ChevronRight, Crown } from "lucide-react";
 import Topbar from "../components/Topbar";
 import Card from "../components/Card";
 import StatTile from "../components/StatTile";
@@ -55,20 +55,7 @@ export default function MyPage() {
               <div>
                 <p className="text-lg font-bold text-gray-900">{user?.name}</p>
                 <p className="text-sm text-gray-500">{user?.email}</p>
-              </div>
-            </div>
-            <div className="flex gap-8 text-center">
-              <div>
-                <p className="text-xs text-gray-400">참여 스터디</p>
-                <p className="text-xl font-bold text-gray-900">{activeStudies.length}개</p>
-              </div>
-              <div>
-                <p className="text-xs text-gray-400">전체 출석률</p>
-                <p className="text-xl font-bold text-emerald-600">{data.attendanceRate.attendanceRate}%</p>
-              </div>
-              <div>
-                <p className="text-xs text-gray-400">스터디장 활동</p>
-                <p className="text-xl font-bold text-gray-900">{leaderCount}개</p>
+                <p className="text-sm text-gray-500">{user?.phone ?? "-"}</p>
               </div>
             </div>
             <button
@@ -78,17 +65,11 @@ export default function MyPage() {
               <LogOut size={14} /> 로그아웃
             </button>
           </div>
-          <div className="mt-5 grid grid-cols-1 gap-3 border-t border-gray-100 pt-5 sm:grid-cols-2">
-            <div className="flex items-center justify-between rounded-xl bg-gray-50 px-4 py-2.5">
-              <span className="text-sm text-gray-500">전화번호</span>
-              <span className="text-sm font-medium text-gray-800">{user?.phone ?? "-"}</span>
-            </div>
-          </div>
         </Card>
 
         <section>
           <h3 className="mb-3 text-sm font-semibold text-gray-500">1. 상단 개인 요약</h3>
-          <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
+          <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
             <StatTile
               icon={<Users size={20} className="text-brand-600" />}
               label="참여중인 스터디"
@@ -108,6 +89,13 @@ export default function MyPage() {
               value={`${data.streak.longestStreak}회`}
               sub="최장 연속 출석"
               iconBg="bg-orange-50"
+            />
+            <StatTile
+              icon={<Crown size={20} className="text-amber-600" />}
+              label="스터디장 활동"
+              value={`${leaderCount}개`}
+              sub="내가 리더인 스터디"
+              iconBg="bg-amber-50"
             />
           </div>
         </section>

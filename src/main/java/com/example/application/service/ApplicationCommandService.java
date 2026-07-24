@@ -4,7 +4,7 @@ import com.example.application.dto.request.CreateApplicationReqDto;
 import com.example.application.dto.request.UpdateApplicationStatusReqDto;
 import com.example.application.dto.response.ApplicationResDto;
 
-public interface ApplicationService {
+public interface ApplicationCommandService {
 	// 스터디 지원
 	ApplicationResDto createApplication(Long applicantId, Long studyId, CreateApplicationReqDto request);
 	// 지원 수락/거절

@@ -100,8 +100,8 @@ public class SubmissionServiceImpl implements SubmissionService {
 
 	// 과제별 제출 목록 조회
 	// open-in-view=false 환경에서 participant/submission의 member 지연 로딩 접근을 위해 트랜잭션 범위가 필요함
-	@Transactional(readOnly = true)
 	@Override
+	@Transactional(readOnly = true)
 	public SubmissionListResDto listSubmission(Long studyId, Long sessionId, Long assignmentId, Long memberId) {
 		
 		// 해당 Study에 참여한 Member인지 검증

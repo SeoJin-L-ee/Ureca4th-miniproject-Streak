@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import { Link, Navigate, useNavigate, useParams } from "react-router-dom";
-import { Users, ClipboardList, UserCheck, Settings, Plus, CalendarDays, CheckCircle2 } from "lucide-react";
+import { Users, ClipboardList, UserCheck, Settings, Plus, CalendarDays, CheckCircle2, ChevronRight } from "lucide-react";
 import Topbar from "../components/Topbar";
 import Card from "../components/Card";
 import Badge from "../components/Badge";
@@ -12,7 +12,7 @@ import * as studiesApi from "../api/studies";
 import * as attendanceApi from "../api/attendance";
 import * as submissionsApi from "../api/submissions";
 import { useAuth } from "../context/AuthContext";
-import type { StudyCategory, StudyDashboardResDto } from "../api/types";
+import type { StudyCategory, StudyDashboardResDto, StudyStatus } from "../api/types";
 import { categoryLabel, studyStatusLabel, studyStatusTone } from "../lib/labels";
 import { formatDateTime, formatDday, formatYmd } from "../lib/format";
 
@@ -37,6 +37,7 @@ export default function StudyDetail() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [editOpen, setEditOpen] = useState(false);
+  const [attendanceModalOpen, setAttendanceModalOpen] = useState(false);
   const [participantStats, setParticipantStats] = useState<ParticipantAttendanceStat[] | null>(null);
   const [teamSubmissions, setTeamSubmissions] = useState<Record<number, TeamSubmissionStat> | null>(null);
 
@@ -164,7 +165,7 @@ export default function StudyDetail() {
           </div>
         </Card>
 
-        <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
+        <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
           <div className="rounded-2xl border border-gray-200 bg-white p-4 shadow-sm">
             <p className="mb-1 text-xs text-gray-500">전체 회차</p>
             <p className="text-2xl font-bold text-gray-900">{data.sessions.totalElements}</p>
@@ -176,21 +177,9 @@ export default function StudyDetail() {
               <span className="text-base font-medium text-gray-400">명</span>
             </p>
           </div>
-          <div
-            className={`rounded-2xl border p-4 shadow-sm ${
-              isLeader && data.currentApplicationCnt > 0 ? "border-amber-200 bg-amber-50" : "border-gray-200 bg-white"
-            }`}
-          >
-            <p className="mb-1 text-xs text-gray-500">{isLeader ? "대기 지원자" : "내 출석률"}</p>
-            <p className={`text-2xl font-bold ${isLeader ? "text-amber-600" : "text-brand-600"}`}>
-              {isLeader ? `${data.currentApplicationCnt}명` : `${myAverage}%`}
-            </p>
-          </div>
-        </div>
-
-        <div className="grid grid-cols-1 gap-4 lg:grid-cols-2">
           <Card title="출석률 비교">
             <MiniBarChart
+              height={120}
               colorLight="#bfdbfe"
               colorDark="#3b82f6"
               data={[
@@ -201,6 +190,7 @@ export default function StudyDetail() {
           </Card>
           <Card title="과제 제출률 비교">
             <MiniBarChart
+              height={120}
               colorLight="#ddd6fe"
               colorDark="#5b3fe0"
               data={[
@@ -217,31 +207,15 @@ export default function StudyDetail() {
           ) : participantStats.length === 0 ? (
             <p className="text-sm text-gray-400">아직 출석이 기록된 회차가 없어요.</p>
           ) : (
-            <ul className="divide-y divide-gray-100">
-              {participantStats
-                .slice()
-                .sort((a, b) => (b.total === 0 ? 0 : b.present / b.total) - (a.total === 0 ? 0 : a.present / a.total))
-                .map((p) => {
-                  const rate = p.total === 0 ? 0 : Math.round((p.present / p.total) * 100);
-                  return (
-                    <li key={p.memberId} className="flex items-center justify-between py-2.5">
-                      <div className="flex items-center gap-3">
-                        <Avatar name={p.name} size={32} />
-                        <p className="text-sm font-medium text-gray-800">
-                          {p.name}
-                          {p.memberId === user?.memberId && <span className="ml-1 text-xs text-gray-400">(나)</span>}
-                        </p>
-                      </div>
-                      <div className="flex items-center gap-3">
-                        <span className="text-xs text-gray-400">
-                          {p.present}/{p.total}
-                        </span>
-                        <span className="w-10 text-right text-sm font-semibold text-brand-600">{rate}%</span>
-                      </div>
-                    </li>
-                  );
-                })}
-            </ul>
+            <button
+              onClick={() => setAttendanceModalOpen(true)}
+              className="flex w-full items-center justify-between rounded-xl border border-gray-100 px-4 py-3 text-left hover:bg-gray-50"
+            >
+              <span className="flex items-center gap-2 text-sm text-gray-600">
+                <Users size={15} className="text-gray-400" /> 참여자 {participantStats.length}명의 출석 상태를 확인해보세요.
+              </span>
+              <ChevronRight size={16} className="shrink-0 text-gray-300" />
+            </button>
           )}
         </Card>
 
@@ -410,12 +384,40 @@ export default function StudyDetail() {
         open={editOpen}
         onClose={() => setEditOpen(false)}
         studyId={id}
-        initial={{ title: data.title, description: data.description, capacity: data.capacity, category: data.category }}
+        initial={{ title: data.title, description: data.description, capacity: data.capacity, category: data.category, status: data.status }}
         onSaved={() => {
           setEditOpen(false);
           load();
         }}
       />
+
+      <Modal open={attendanceModalOpen} onClose={() => setAttendanceModalOpen(false)} title="참여자별 출석 현황">
+        <ul className="divide-y divide-gray-100">
+          {(participantStats ?? [])
+            .slice()
+            .sort((a, b) => (b.total === 0 ? 0 : b.present / b.total) - (a.total === 0 ? 0 : a.present / a.total))
+            .map((p) => {
+              const rate = p.total === 0 ? 0 : Math.round((p.present / p.total) * 100);
+              return (
+                <li key={p.memberId} className="flex items-center justify-between py-2.5">
+                  <div className="flex items-center gap-3">
+                    <Avatar name={p.name} size={32} />
+                    <p className="text-sm font-medium text-gray-800">
+                      {p.name}
+                      {p.memberId === user?.memberId && <span className="ml-1 text-xs text-gray-400">(나)</span>}
+                    </p>
+                  </div>
+                  <div className="flex items-center gap-3">
+                    <span className="text-xs text-gray-400">
+                      {p.present}/{p.total}
+                    </span>
+                    <span className="w-10 text-right text-sm font-semibold text-brand-600">{rate}%</span>
+                  </div>
+                </li>
+              );
+            })}
+        </ul>
+      </Modal>
     </>
   );
 }
@@ -430,7 +432,7 @@ function EditStudyModal({
   open: boolean;
   onClose: () => void;
   studyId: number;
-  initial: { title: string; description: string; capacity: number; category: StudyCategory };
+  initial: { title: string; description: string; capacity: number; category: StudyCategory; status: StudyStatus };
   onSaved: () => void;
 }) {
   const [form, setForm] = useState(initial);
@@ -444,7 +446,11 @@ function EditStudyModal({
   const submit = async () => {
     setSaving(true);
     try {
-      await studiesApi.updateStudy(studyId, form);
+      const { status, ...studyFields } = form;
+      await studiesApi.updateStudy(studyId, studyFields);
+      if (status !== initial.status) {
+        await studiesApi.updateStudyStatus(studyId, status);
+      }
       onSaved();
     } finally {
       setSaving(false);
@@ -470,6 +476,20 @@ function EditStudyModal({
             className="w-full rounded-lg border border-gray-200 px-3 py-2 text-sm focus:border-brand-400 focus:outline-none"
           >
             {Object.entries(categoryLabel).map(([value, label]) => (
+              <option key={value} value={value}>
+                {label}
+              </option>
+            ))}
+          </select>
+        </div>
+        <div>
+          <label className="mb-1 block text-sm font-medium text-gray-700">모집 상태</label>
+          <select
+            value={form.status}
+            onChange={(e) => setForm({ ...form, status: e.target.value as StudyStatus })}
+            className="w-full rounded-lg border border-gray-200 px-3 py-2 text-sm focus:border-brand-400 focus:outline-none"
+          >
+            {Object.entries(studyStatusLabel).map(([value, label]) => (
               <option key={value} value={value}>
                 {label}
               </option>

@@ -176,9 +176,11 @@ export default function RoundDetail() {
         <Card
           title="과제 리스트"
           action={
-            <Link to={`/studies/${studyId}/sessions/${roundId}/assignments/new`} className="flex items-center gap-1 text-xs font-medium text-brand-600">
-              <Plus size={13} /> 과제 추가
-            </Link>
+            isLeader && (
+              <Link to={`/studies/${studyId}/sessions/${roundId}/assignments/new`} className="flex items-center gap-1 text-xs font-medium text-brand-600">
+                <Plus size={13} /> 과제 추가
+              </Link>
+            )
           }
         >
           <ul className="space-y-2">

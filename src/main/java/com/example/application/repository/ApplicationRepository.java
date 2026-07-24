@@ -81,4 +81,17 @@ public interface ApplicationRepository extends JpaRepository<Application, Long> 
 			@Param("studyIds") List<Long> studyIds
 	);
 	
+	// 특정 스터디의 모든 지원 내역 조회
+	@Query("""
+			SELECT a
+			FROM Application a
+				JOIN FETCH a.applicant
+			WHERE a.study.id = :studyId
+			ORDER BY a.createdAt DESC
+			""")
+	List<Application> findAllByStudyIdWithApplicant(@Param("studyId") Long studyId);
+	
+	// 스터디 지원 상태 조회 (가장 최근 지원 내역)
+    Optional<Application> findTopByStudyIdAndApplicantIdOrderByCreatedAtDesc(Long studyId, Long applicantId);
+	
 }

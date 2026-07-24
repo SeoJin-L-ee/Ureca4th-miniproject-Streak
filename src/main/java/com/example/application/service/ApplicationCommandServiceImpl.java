@@ -29,7 +29,7 @@ import lombok.RequiredArgsConstructor;
 
 @Service
 @RequiredArgsConstructor
-public class ApplicationServiceImpl implements ApplicationService {
+public class ApplicationCommandServiceImpl implements ApplicationCommandService {
 	
 	private final ApplicationRepository applicationRepository;
 	private final MemberRepository memberRepository;

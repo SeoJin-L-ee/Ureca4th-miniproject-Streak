@@ -5,6 +5,7 @@ export type StudyStatus = "RECRUITING" | "CLOSED" | "ENDED";
 export type StudyRole = "LEADER" | "MEMBER";
 export type AttendanceStatus = "UNMARKED" | "PRESENT" | "ABSENT";
 export type ApplicationStatus = "PENDING" | "APPROVED" | "REJECTED";
+export type MyStudyApplyStatus = "NONE" | "PENDING" | "ACCEPTED" | "REJECTED";
 
 export interface AuthResDto {
   memberId: number;
@@ -125,6 +126,43 @@ export interface UpdateStudyLeaderResDto {
   newLeaderName: string;
 }
 
+// ---- study apply (스터디 찾기) ----
+export interface StudyApplySummaryResDto {
+  studyId: number;
+  title: string;
+  leaderName: string;
+  category: StudyCategory;
+  status: StudyStatus;
+  myStatus: MyStudyApplyStatus;
+  currentParticipantCnt: number;
+  capacity: number;
+  createdAt: string;
+}
+
+export interface StudyApplySummaryListResDto {
+  currentPageNum: number;
+  pageSize: number;
+  totalPages: number;
+  totalElements: number;
+  hasNext: boolean;
+  studyList: StudyApplySummaryResDto[];
+}
+
+export interface StudyApplyDetailResDto {
+  studyId: number;
+  title: string;
+  leaderId: number;
+  leaderName: string;
+  description: string;
+  category: StudyCategory;
+  status: StudyStatus;
+  myStatus: MyStudyApplyStatus;
+  currentParticipantCnt: number;
+  capacity: number;
+  isLeader: boolean;
+  createdAt: string;
+}
+
 // ---- session ----
 export interface SessionResDto {
   sessionId: number;
@@ -202,6 +240,7 @@ export interface ApplicationResDto {
   applicantName: string;
   content: string;
   status: ApplicationStatus;
+  appliedAt: string;
 }
 
 // ---- submission ----

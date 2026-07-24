@@ -10,6 +10,7 @@ import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import com.example.assignment.entity.Assignment;
 import com.example.assignment.repository.AssignmentRepository;
@@ -38,7 +39,6 @@ import com.example.study.exception.code.StudyErrorCode;
 import com.example.study.repository.StudyRepository;
 import com.example.submission.repository.SubmissionRepository;
 
-import org.springframework.transaction.annotation.Transactional;
 import lombok.RequiredArgsConstructor;
 
 @Service
@@ -113,8 +113,8 @@ public class SessionServiceImpl implements SessionService {
 
 	// 스터디 회차 상세 조회
 	// open-in-view=false 환경에서 attendance.getMember() 지연 로딩 접근을 위해 트랜잭션 범위가 필요함
-	@Transactional(readOnly = true)
 	@Override
+	@Transactional(readOnly = true)
 	public SessionInfoResDto detailSession(long studyId, long sessionId, long memberId) {
 		
 		Session session = sessionRepository.findById(sessionId)

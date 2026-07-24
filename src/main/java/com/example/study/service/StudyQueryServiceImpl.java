@@ -1,6 +1,10 @@
 package com.example.study.service;
 
+import com.example.member.entity.Member;
+import com.example.member.exception.code.MemberErrorCode;
+import com.example.member.repository.MemberRepository;
 import java.time.LocalDateTime;
+import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
@@ -10,6 +14,7 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import com.example.application.dto.response.MemberApplicationStatusDto;
 import com.example.application.entity.enums.ApplicationStatus;
 import com.example.application.repository.ApplicationRepository;
 import com.example.assignment.dto.response.AssignmentDashboardDataDto;
@@ -23,6 +28,7 @@ import com.example.global.common.code.CommonErrorCode;
 import com.example.global.common.exception.GeneralException;
 import com.example.participant.entity.Participant;
 import com.example.participant.entity.enums.StudyRole;
+import com.example.participant.exception.ParticipantErrorCode;
 import com.example.participant.repository.ParticipantRepository;
 import com.example.session.dto.response.SessionDashboardDataDto;
 import com.example.session.dto.response.SessionSummaryResDto;
@@ -31,10 +37,16 @@ import com.example.session.repository.SessionRepository;
 import com.example.session.service.SessionService;
 import com.example.study.converter.StudyConverter;
 import com.example.study.converter.StudyDashboardConverter;
+import com.example.study.dto.response.StudyApplyDetailResDto;
+import com.example.study.dto.response.StudyApplySummaryListResDto;
+import com.example.study.dto.response.StudyApplySummaryResDto;
 import com.example.study.dto.response.StudyDashboardResDto;
+import com.example.study.dto.response.StudyLeaderDto;
+import com.example.study.dto.response.StudyParticipantCountDto;
 import com.example.study.dto.response.StudySummaryListResDto;
 import com.example.study.dto.response.StudySummaryResDto;
 import com.example.study.entity.Study;
+import com.example.study.entity.enums.StudyCategory;
 import com.example.study.entity.enums.StudyStatus;
 import com.example.study.exception.StudyErrorCode;
 import com.example.study.repository.StudyRepository;
@@ -45,6 +57,7 @@ import lombok.RequiredArgsConstructor;
 @RequiredArgsConstructor
 public class StudyQueryServiceImpl implements StudyQueryService {
 	
+	private final MemberRepository memberRepository;
 	private final StudyRepository studyRepository;
 	private final SessionRepository sessionRepository;
 	private final ApplicationRepository applicationRepository;
@@ -132,6 +145,111 @@ public class StudyQueryServiceImpl implements StudyQueryService {
 				now);
 	}
 	
+	@Override
+	@Transactional(readOnly = true)
+	// 스터디 탐색 목록 조회 (전체, 카테고리별, 제목 검색)
+	public StudyApplySummaryListResDto getStudiesForApply(Long memberId, StudyCategory category, String title, Pageable pageable) {
+		if (!memberRepository.existsById(memberId)) throw new GeneralException(MemberErrorCode.MEMBER_NOT_FOUND);
+		
+		Page<Study> studyPage = studyRepository.findAllForApply(category, title, pageable);
+		List<Study> studies = studyPage.getContent();
+		if (studies.isEmpty()) {
+			return new StudyApplySummaryListResDto(
+					studyPage.getNumber(),
+					studyPage.getSize(),
+					studyPage.getTotalPages(),
+					studyPage.getTotalElements(),
+					studyPage.hasNext(),
+					Collections.emptyList());
+		}
+		List<Long> studyIds = studies.stream().map(Study::getId).toList();
+		
+		// 각 스터디별 스터디장 이름 한번에 가져오기
+		Map<Long, String> leaderMap = participantRepository.findLeadersByStudyIds(studyIds, StudyRole.LEADER).stream()
+	            .collect(Collectors.toMap(
+	            		StudyLeaderDto::studyId,
+	            		StudyLeaderDto::leaderName));
+		
+		// 각 스터디별 참여자 수 한번에 가져오기
+		Map<Long, Integer> participantCountMap = participantRepository.countParticipantsByStudyIds(studyIds).stream()
+				.collect(Collectors.
+						toMap(StudyParticipantCountDto::studyId,
+						p -> p.count().intValue()));
+		
+		// 각 스터디에 대한 지원 상태 (이미 지원함, 참여중, 지원가능 등) 한번에 가져오기
+		Map<Long, StudyApplySummaryResDto.MyStudyStatus> myStudyStatuses = 
+				applicationRepository.findMyApplicationStatuses(memberId, studyIds).stream()
+					.collect(Collectors.toMap(
+							MemberApplicationStatusDto::studyId,
+							p -> changeToMyStudyStatus(p.status())
+					));
+		
+		// 합치기
+		List<StudyApplySummaryResDto> summaryDtos = studies.stream()
+				.map(study -> new StudyApplySummaryResDto(
+						study.getId(),
+						study.getTitle(),
+						leaderMap.getOrDefault(study.getId(), "알 수 없음"),
+						study.getCategory(),
+						study.getStatus(),
+						myStudyStatuses.getOrDefault(study.getId(), StudyApplySummaryResDto.MyStudyStatus.NONE),
+						participantCountMap.getOrDefault(study.getId(), 0),
+						study.getCapacity(),
+						study.getCreatedAt()
+				)).toList();
+		
+		return new StudyApplySummaryListResDto(
+				studyPage.getNumber(),
+				studyPage.getSize(),
+				studyPage.getTotalPages(),
+				studyPage.getTotalElements(),
+				studyPage.hasNext(),
+				summaryDtos);
+	}
+
+	@Override
+	@Transactional(readOnly = true)
+	// 스터디 상세 조회 (스터디 찾기 화면에서)
+	public StudyApplyDetailResDto getStudyDetailForApply(Long memberId, Long studyId) {
+		if (!memberRepository.existsById(memberId)) throw new GeneralException(MemberErrorCode.MEMBER_NOT_FOUND);
+		Study study = studyRepository.findByIdAndIsDeletedFalse(studyId)
+				.orElseThrow(() -> new GeneralException(StudyErrorCode.STUDY_NOT_FOUND));
+		
+		Participant leaderParticipant = participantRepository.findLeaderByStudyId(studyId, StudyRole.LEADER)
+				.orElseThrow(() -> new GeneralException(ParticipantErrorCode.PARTICIPANT_NOT_FOUND));
+		Member leader = leaderParticipant.getMember();
+		
+		// 현재 참여자 수 계산
+		int currentParticipantCnt = (int) participantRepository.countByStudyId(studyId);
+
+		StudyApplySummaryResDto.MyStudyStatus myStatus = StudyApplySummaryResDto.MyStudyStatus.NONE;
+        boolean isLeader = false;
+        // 스터디장 여부 확인
+    	isLeader = leader.getId().equals(memberId);
+        if (isLeader) {
+        	// 스터디장이면 굳이 조회 없이 ACCEPTED 처리
+            myStatus = StudyApplySummaryResDto.MyStudyStatus.ACCEPTED;
+        } else {
+        	// 일반 멤버면 가장 최근 지원서 확인해서 상태 결정
+            myStatus = applicationRepository.findTopByStudyIdAndApplicantIdOrderByCreatedAtDesc(studyId, memberId)
+                    .map(app -> changeToMyStudyStatus(app.getStatus()))
+                    .orElse(StudyApplySummaryResDto.MyStudyStatus.NONE);
+        }
+        return new StudyApplyDetailResDto(
+                study.getId(),
+                study.getTitle(),
+                leader.getId(),
+                leader.getName(),
+                study.getDescription(),
+                study.getCategory(),
+                study.getStatus(),
+                myStatus,
+                currentParticipantCnt,
+                study.getCapacity(),
+                isLeader,
+                study.getCreatedAt());
+	}
+	
 	// 각 스터디별 다음 회차 구하기
 	private Map<Long, Session> getNextSessionInfos(List<Long> studyIds, LocalDateTime now) {
 		// 각 스터디 아이디별로, 현재 시각 기준 가장 가깝게 예정된 회차를 조회
@@ -148,6 +266,15 @@ public class StudyQueryServiceImpl implements StudyQueryService {
 	private Map<Long, Double> getAttendanceRates(List<Long> studyIds, LocalDateTime now) {
 		return attendanceRepository.calculateStudyAttendanceRatesByStudyIds(studyIds, now, AttendanceStatus.PRESENT).stream()
 				.collect(Collectors.toMap(StudyAttendanceRateDto::studyId, StudyAttendanceRateDto::attendanceRate));
+	}
+	
+	// MyStudyStatus 타입으로 바꿔줌
+	private StudyApplySummaryResDto.MyStudyStatus changeToMyStudyStatus(ApplicationStatus status) {
+		if (status == null) return StudyApplySummaryResDto.MyStudyStatus.NONE;
+		return switch (status) {
+			case PENDING -> StudyApplySummaryResDto.MyStudyStatus.PENDING;
+			case APPROVED -> StudyApplySummaryResDto.MyStudyStatus.ACCEPTED;
+			case REJECTED -> StudyApplySummaryResDto.MyStudyStatus.REJECTED;};
 	}
 
 }

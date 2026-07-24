@@ -1,24 +1,31 @@
 import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
-import { ChevronRight } from "lucide-react";
+import { ChevronRight, Plus } from "lucide-react";
 import Topbar from "../components/Topbar";
 import Badge from "../components/Badge";
 import ProgressBar from "../components/ProgressBar";
+import Modal from "../components/Modal";
 import * as studiesApi from "../api/studies";
-import type { StudySummaryResDto } from "../api/types";
+import type { StudyCategory, StudySummaryResDto } from "../api/types";
 import { categoryLabel } from "../lib/labels";
 
 export default function MyStudyList() {
   const [studies, setStudies] = useState<StudySummaryResDto[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [createOpen, setCreateOpen] = useState(false);
 
-  useEffect(() => {
+  const load = () => {
+    setLoading(true);
     studiesApi
       .getMyStudyList()
       .then((res) => setStudies(res.studyList))
       .catch(() => setError("스터디 목록을 불러오지 못했어요."))
       .finally(() => setLoading(false));
+  };
+
+  useEffect(() => {
+    load();
   }, []);
 
   return (
@@ -60,6 +67,100 @@ export default function MyStudyList() {
           })}
         </div>
       </main>
+
+      <button
+        onClick={() => setCreateOpen(true)}
+        aria-label="스터디 생성"
+        className="fixed bottom-8 right-8 flex h-14 w-14 items-center justify-center rounded-full bg-brand-600 text-white shadow-lg hover:bg-brand-700"
+      >
+        <Plus size={24} />
+      </button>
+
+      <CreateStudyModal
+        open={createOpen}
+        onClose={() => setCreateOpen(false)}
+        onCreated={() => {
+          setCreateOpen(false);
+          load();
+        }}
+      />
     </>
+  );
+}
+
+function CreateStudyModal({ open, onClose, onCreated }: { open: boolean; onClose: () => void; onCreated: () => void }) {
+  const [form, setForm] = useState({ title: "", description: "", capacity: 4, category: "ALGORITHM" as StudyCategory });
+  const [saving, setSaving] = useState(false);
+
+  useEffect(() => {
+    if (open) setForm({ title: "", description: "", capacity: 4, category: "ALGORITHM" });
+  }, [open]);
+
+  const submit = async () => {
+    if (!form.title.trim() || !form.description.trim()) return;
+    setSaving(true);
+    try {
+      await studiesApi.createStudy(form);
+      onCreated();
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  return (
+    <Modal open={open} onClose={onClose} title="스터디 생성">
+      <div className="space-y-3">
+        <div>
+          <label className="mb-1 block text-sm font-medium text-gray-700">스터디명</label>
+          <input
+            value={form.title}
+            onChange={(e) => setForm({ ...form, title: e.target.value })}
+            className="w-full rounded-lg border border-gray-200 px-3 py-2 text-sm focus:border-brand-400 focus:outline-none"
+            placeholder="예: 알고리즘 스터디"
+          />
+        </div>
+        <div>
+          <label className="mb-1 block text-sm font-medium text-gray-700">카테고리</label>
+          <select
+            value={form.category}
+            onChange={(e) => setForm({ ...form, category: e.target.value as StudyCategory })}
+            className="w-full rounded-lg border border-gray-200 px-3 py-2 text-sm focus:border-brand-400 focus:outline-none"
+          >
+            {Object.entries(categoryLabel).map(([value, label]) => (
+              <option key={value} value={value}>
+                {label}
+              </option>
+            ))}
+          </select>
+        </div>
+        <div>
+          <label className="mb-1 block text-sm font-medium text-gray-700">정원</label>
+          <input
+            type="number"
+            min={1}
+            value={form.capacity}
+            onChange={(e) => setForm({ ...form, capacity: Number(e.target.value) })}
+            className="w-full rounded-lg border border-gray-200 px-3 py-2 text-sm focus:border-brand-400 focus:outline-none"
+          />
+        </div>
+        <div>
+          <label className="mb-1 block text-sm font-medium text-gray-700">설명</label>
+          <textarea
+            rows={3}
+            value={form.description}
+            onChange={(e) => setForm({ ...form, description: e.target.value })}
+            className="w-full rounded-lg border border-gray-200 px-3 py-2 text-sm focus:border-brand-400 focus:outline-none"
+            placeholder="스터디를 소개해주세요"
+          />
+        </div>
+        <button
+          onClick={submit}
+          disabled={saving || !form.title.trim() || !form.description.trim()}
+          className="w-full rounded-lg bg-brand-600 py-2.5 text-sm font-semibold text-white hover:bg-brand-700 disabled:opacity-60"
+        >
+          {saving ? "생성 중..." : "생성하기"}
+        </button>
+      </div>
+    </Modal>
   );
 }

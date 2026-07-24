@@ -5,6 +5,11 @@ export function applyToStudy(studyId: number, content: string) {
   return api.post<ApplicationResDto>(`/api/studies/${studyId}/applications`, { content });
 }
 
+// 지원자 목록 조회 (스터디장 전용)
+export function getApplications(studyId: number) {
+  return api.get<ApplicationResDto[]>(`/api/studies/${studyId}/applications`);
+}
+
 export function updateApplicationStatus(applicationId: number, status: ApplicationStatus) {
   return api.patch<ApplicationResDto>(`/api/applications/${applicationId}/status`, { status });
 }

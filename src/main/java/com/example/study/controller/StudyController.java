@@ -19,10 +19,13 @@ import com.example.global.security.CurrentUser;
 import com.example.global.security.MemberPrincipal;
 import com.example.study.dto.request.CreateStudyReqDto;
 import com.example.study.dto.request.UpdateStudyReqDto;
+import com.example.study.dto.response.StudyApplyDetailResDto;
+import com.example.study.dto.response.StudyApplySummaryListResDto;
 import com.example.study.dto.response.StudyDashboardResDto;
 import com.example.study.dto.response.StudyInfoResDto;
 import com.example.study.dto.response.StudySummaryListResDto;
 import com.example.study.dto.response.UpdateStudyLeaderResDto;
+import com.example.study.entity.enums.StudyCategory;
 import com.example.study.entity.enums.StudyStatus;
 import com.example.study.service.StudyCommandService;
 import com.example.study.service.StudyQueryService;
@@ -90,7 +93,7 @@ public class StudyController {
 		return CustomResponse.onSuccess(null);
 	}
 	
-	@GetMapping("")
+	@GetMapping("/me")
 	// 사용자별 참여 중인 스터디 목록 조회
 	public CustomResponse<StudySummaryListResDto> findStudySummaryList(
 			@CurrentUser MemberPrincipal principal,
@@ -112,4 +115,27 @@ public class StudyController {
         StudyDashboardResDto resDto = studyQueryService.findStudyDashboard(principal.memberId(), studyId, pageable);
         return CustomResponse.onSuccess(resDto);
     }
+    
+	// 스터디 탐색 목록 조회 (전체, 카테고리별, 제목 검색)
+	@GetMapping("")
+	public CustomResponse<StudyApplySummaryListResDto> getStudiesForApply(
+			@CurrentUser MemberPrincipal principal,
+			@RequestParam(name = "category", required = false) StudyCategory category,
+			@RequestParam(name = "title", required = false) String title,
+			@PageableDefault(page = 0, size = 10, sort = "createdAt", direction = Sort.Direction.DESC) Pageable pageable
+	) {
+		StudyApplySummaryListResDto resDto = studyQueryService.getStudiesForApply(principal.memberId(), category, title, pageable);
+		return CustomResponse.onSuccess(resDto);
+	}
+	
+	// 스터디 상세 조회 (스터디 찾기 화면에서)
+	@GetMapping("/{studyId}")
+	public CustomResponse<StudyApplyDetailResDto> getStudyDetailForApply(
+			@CurrentUser MemberPrincipal principal,
+			@PathVariable("studyId") Long studyId
+	) {
+		StudyApplyDetailResDto resDto = studyQueryService.getStudyDetailForApply(principal.memberId(), studyId);
+		return CustomResponse.onSuccess(resDto);
+	}
+	
 }

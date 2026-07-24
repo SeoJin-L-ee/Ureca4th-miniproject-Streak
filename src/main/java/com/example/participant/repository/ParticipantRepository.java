@@ -13,6 +13,8 @@ import org.springframework.data.repository.query.Param;
 import com.example.member.entity.Member;
 import com.example.participant.entity.Participant;
 import com.example.participant.entity.enums.StudyRole;
+import com.example.study.dto.response.StudyLeaderDto;
+import com.example.study.dto.response.StudyParticipantCountDto;
 import com.example.study.entity.enums.StudyStatus;
 
 public interface ParticipantRepository extends JpaRepository<Participant, Long> {
@@ -70,4 +72,42 @@ public interface ParticipantRepository extends JpaRepository<Participant, Long> 
 			WHERE p.member.id = :memberId
 			""")
 	List<Participant> findAllByMemberIdFetchStudy(@Param("memberId") Long memberId);
+	
+	// 여러 스터디의 참여자 수를 한 번에 계산
+	@Query("""
+			SELECT new com.example.study.dto.response.StudyParticipantCountDto(
+				p.study.id,
+				COUNT(p))
+			FROM Participant p
+			WHERE p.study.id IN :studyIds
+			GROUP BY p.study.id
+			""")
+	List<StudyParticipantCountDto> countParticipantsByStudyIds(@Param("studyIds") List<Long> studyIds);
+	
+	// 특정 스터디의 LEADER 권한을 가진 Participant(Member 포함) 단건 조회
+	@Query("""
+			SELECT p
+			FROM Participant p
+				JOIN FETCH p.member
+			WHERE p.study.id = :studyId
+				AND p.role = :role
+			""")
+	Optional<Participant> findLeaderByStudyId(
+			@Param("studyId") Long studyId,
+    		@Param("role") StudyRole leaderRole
+    );
+	
+	// 여러 스터디의 스터디장 정보(스터디 id + 스터디장 이름)를 한번에 조회
+	@Query("""
+			SELECT new com.example.study.dto.response.StudyLeaderDto(
+				p.study.id, p.member.name)
+			FROM Participant p
+			WHERE p.study.id IN :studyIds
+				AND p.role = :role
+			""")
+    List<StudyLeaderDto> findLeadersByStudyIds(
+    		@Param("studyIds") List<Long> studyIds,
+    		@Param("role") StudyRole leaderRole
+    );
+	
 }

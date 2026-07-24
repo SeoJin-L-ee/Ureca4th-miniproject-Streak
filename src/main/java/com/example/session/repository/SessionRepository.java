@@ -45,7 +45,7 @@ public interface SessionRepository extends JpaRepository<Session, Long>{
 			SELECT s FROM Session s
 			WHERE s.study.id = :studyId
 				AND s.startsAt > :now
-			ORDER BY s.startsAt ASC
+			ORDER BY s.startsAt ASC, s.createdAt ASC
 			""")
 	List<Session> findNextSessionByStudyId(
 		@Param("studyId") Long studyId,

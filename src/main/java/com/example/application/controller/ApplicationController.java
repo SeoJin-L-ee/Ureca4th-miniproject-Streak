@@ -1,7 +1,10 @@
 package com.example.application.controller;
 
+import java.util.List;
+
 import org.springframework.http.HttpStatus;
 import org.springframework.web.bind.annotation.DeleteMapping;
+import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PatchMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -12,7 +15,8 @@ import org.springframework.web.bind.annotation.RestController;
 import com.example.application.dto.request.CreateApplicationReqDto;
 import com.example.application.dto.request.UpdateApplicationStatusReqDto;
 import com.example.application.dto.response.ApplicationResDto;
-import com.example.application.service.ApplicationService;
+import com.example.application.service.ApplicationCommandService;
+import com.example.application.service.ApplicationQueryService;
 import com.example.global.common.CustomResponse;
 import com.example.global.security.CurrentUser;
 import com.example.global.security.MemberPrincipal;
@@ -25,7 +29,8 @@ import lombok.RequiredArgsConstructor;
 @RequestMapping("/api")
 public class ApplicationController {
 	
-	private final ApplicationService applicationService;
+	private final ApplicationCommandService applicationCommandService;
+	private final ApplicationQueryService applicationQueryService;
 	
 	@PostMapping("/studies/{studyId}/applications")
 	// 스터디 지원
@@ -34,7 +39,7 @@ public class ApplicationController {
 			@PathVariable("studyId") Long studyId,
 			@Valid @RequestBody CreateApplicationReqDto reqDto
 	) {
-		ApplicationResDto resDto = applicationService.createApplication(principal.memberId(), studyId, reqDto);
+		ApplicationResDto resDto = applicationCommandService.createApplication(principal.memberId(), studyId, reqDto);
 		return CustomResponse.onSuccess(HttpStatus.CREATED, resDto);
 	}
 	
@@ -45,7 +50,7 @@ public class ApplicationController {
 			@PathVariable("applicationId") Long applicationId,
 			@Valid @RequestBody UpdateApplicationStatusReqDto reqDto
 	) {
-		ApplicationResDto resDto = applicationService.updateApplicationStatus(principal.memberId(), applicationId, reqDto);
+		ApplicationResDto resDto = applicationCommandService.updateApplicationStatus(principal.memberId(), applicationId, reqDto);
 		return CustomResponse.onSuccess(resDto);
 	}
 	
@@ -55,8 +60,17 @@ public class ApplicationController {
 			@CurrentUser MemberPrincipal principal,
 			@PathVariable("applicationId") Long applicationId
 	) {
-		applicationService.deleteMyApplication(principal.memberId(), applicationId);
+		applicationCommandService.deleteMyApplication(principal.memberId(), applicationId);
 		return CustomResponse.onSuccess(null);
 	}
 	
+	@GetMapping("/studies/{studyId}/applications")
+	// 지원자 목록 조회 (스터디장 전용)
+	public CustomResponse<List<ApplicationResDto>> getApplications(
+			@CurrentUser MemberPrincipal principal,
+			@PathVariable("studyId") Long studyId
+	) {
+		List<ApplicationResDto> resDtoList = applicationQueryService.getApplications(principal.memberId(), studyId);
+        return CustomResponse.onSuccess(resDtoList);
+    }
 }
