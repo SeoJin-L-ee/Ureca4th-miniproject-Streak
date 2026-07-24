@@ -67,7 +67,6 @@ public interface ApplicationRepository extends JpaRepository<Application, Long> 
 			@Param("applicantId") Long applicantId
 	);
 	
-	// TODO: 아직 사용 안한 쿼리임, 스터디 모집 목록 조회 시 사용돼야 함
 	// 스터디 목록 조회를 위해, 현재 사용자의 지원 상태를 전부 조회
 	@Query("""
 			SELECT new com.example.application.dto.response.MemberApplicationStatusDto(
@@ -91,5 +90,8 @@ public interface ApplicationRepository extends JpaRepository<Application, Long> 
 			ORDER BY a.createdAt DESC
 			""")
 	List<Application> findAllByStudyIdWithApplicant(@Param("studyId") Long studyId);
+	
+	// 스터디 지원 상태 조회 (가장 최근 지원 내역)
+    Optional<Application> findTopByStudyIdAndApplicantIdOrderByCreatedAtDesc(Long studyId, Long applicantId);
 	
 }
