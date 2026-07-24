@@ -111,7 +111,8 @@ public class SessionServiceImpl implements SessionService {
 	}
 
 
-	// 스터디 회차 상세 조회 
+	// 스터디 회차 상세 조회
+	// open-in-view=false 환경에서 attendance.getMember() 지연 로딩 접근을 위해 트랜잭션 범위가 필요함
 	@Override
 	@Transactional(readOnly = true)
 	public SessionInfoResDto detailSession(long studyId, long sessionId, long memberId) {
@@ -181,7 +182,9 @@ public class SessionServiceImpl implements SessionService {
 	// 가까운 다음 회차 & 전체 회차 목록 한번에 조회
 	@Override
 	public SessionDashboardDataDto findSessionDashboardData(long studyId, LocalDateTime now, Pageable pageable) {
-		SessionSummaryResDto nextSession = sessionRepository.findNextSessionByStudyId(studyId, now)
+		SessionSummaryResDto nextSession = sessionRepository.findNextSessionByStudyId(studyId, now, PageRequest.of(0, 1))
+				.stream()
+				.findFirst()
 				.map(SessionConverter::toSessionSummaryResDto)
 				.orElse(null);
 		

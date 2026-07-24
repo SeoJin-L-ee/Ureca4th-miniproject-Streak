@@ -1,0 +1,12 @@
+.git
+.gradle
+build
+bin
+out
+.idea
+.vscode
+*.iml
+HELP.md
+
+frontend/node_modules
+frontend/dist
