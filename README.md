@@ -119,6 +119,8 @@ FLUSH PRIVILEGES;
 | member3@test.com | 최지원 | 미가입 회원 (가입 신청 PENDING/REJECTED 데이터 보유) | password123! |
 | leader2@test.com | 정리더 | 토익 900 스터디 리더 | password123! |
 
+이 외에도 `member4`~`member16`, `leader3`~`leader4` 패턴(예: `member4@test.com`)으로 15개 계정이 더 있으며, 비밀번호는 모두 동일합니다 (정보처리기사 스터디, 사이드 프로젝트 스터디 등에 배정됨).
+
 새 계정이 필요하면 `/api/auth/signup`으로 직접 회원가입해도 됩니다.
 
 ### API 인증 흐름
