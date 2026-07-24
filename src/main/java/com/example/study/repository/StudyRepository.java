@@ -16,6 +16,9 @@ public interface StudyRepository extends JpaRepository<Study, Long> {
 	// id 기반으로 삭제되지 않은 Study 검색
 	Optional<Study> findByIdAndIsDeletedFalse(Long id);
 	
+	// id 기반으로 존재하면서 삭제되지 않은 스터디인지만 검증
+	boolean existsByIdAndIsDeletedFalse(Long studyId);
+	
 	// 정원 초과될 수도 있으니 얘도 비관적 락
 	@Lock(LockModeType.PESSIMISTIC_WRITE)
 	@Query("""
