@@ -100,6 +100,7 @@ public class SubmissionServiceImpl implements SubmissionService {
 
 	// 과제별 제출 목록 조회 
 	@Override
+	@Transactional(readOnly = true)
 	public SubmissionListResDto listSubmission(Long studyId, Long sessionId, Long assignmentId, Long memberId) {
 		
 		// 해당 Study에 참여한 Member인지 검증

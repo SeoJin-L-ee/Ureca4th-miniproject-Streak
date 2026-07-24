@@ -13,7 +13,8 @@ public class ApplicationConverter {
 				application.getApplicant().getId(),
 				application.getApplicant().getName(),
 				application.getContent(),
-				application.getStatus());
+				application.getStatus(),
+				application.getCreatedAt());
 	}
 
 }

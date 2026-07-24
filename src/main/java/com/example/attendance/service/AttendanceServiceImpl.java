@@ -9,6 +9,7 @@ import java.util.Map;
 import java.util.stream.Collectors;
 
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import com.example.attendance.converter.AttendanceConverter;
 import com.example.attendance.dto.request.BatchSaveAttendanceReqDto;
@@ -37,7 +38,6 @@ import com.example.session.repository.SessionRepository;
 import com.example.study.exception.StudyErrorCode;
 import com.example.study.repository.StudyRepository;
 
-import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 
 @Service

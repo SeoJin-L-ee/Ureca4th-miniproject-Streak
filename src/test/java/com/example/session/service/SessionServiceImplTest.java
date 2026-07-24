@@ -13,6 +13,7 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.TestMethodOrder;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.transaction.annotation.Transactional;
 
 import com.example.assignment.entity.Assignment;
 import com.example.assignment.repository.AssignmentRepository;
@@ -38,8 +39,6 @@ import com.example.study.entity.enums.StudyStatus;
 import com.example.study.repository.StudyRepository;
 import com.example.submission.entity.Submission;
 import com.example.submission.repository.SubmissionRepository;
-
-import jakarta.transaction.Transactional;
 
 @SpringBootTest 
 @TestMethodOrder(MethodOrderer.OrderAnnotation.class)

@@ -1,6 +1,7 @@
 package com.example.study.service;
 
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import com.example.global.common.code.CommonErrorCode;
 import com.example.global.common.exception.GeneralException;
@@ -21,7 +22,6 @@ import com.example.study.entity.enums.StudyStatus;
 import com.example.study.exception.StudyErrorCode;
 import com.example.study.repository.StudyRepository;
 
-import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 
 @Service

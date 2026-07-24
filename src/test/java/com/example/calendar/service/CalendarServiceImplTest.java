@@ -10,6 +10,7 @@ import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.transaction.annotation.Transactional;
 
 import com.example.assignment.entity.Assignment;
 import com.example.assignment.repository.AssignmentRepository;
@@ -27,8 +28,6 @@ import com.example.study.entity.Study;
 import com.example.study.entity.enums.StudyCategory;
 import com.example.study.entity.enums.StudyStatus;
 import com.example.study.repository.StudyRepository;
-
-import jakarta.transaction.Transactional;
 
 @SpringBootTest
 @Transactional
