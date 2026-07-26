@@ -9,6 +9,7 @@ import com.example.attendance.entity.Attendance;
 import com.example.attendance.entity.enums.AttendanceStatus;
 import com.example.member.entity.Member;
 import com.example.participant.entity.Participant;
+import com.example.participant.entity.enums.StudyRole;
 import com.example.session.entity.Session;
 
 public class AttendanceConverter {
@@ -19,6 +20,7 @@ public class AttendanceConverter {
 		return new AttendanceMemberResDto(
 				participant.getMember().getId(),
 				participant.getMember().getName(),
+				participant.getRole().equals(StudyRole.LEADER),
 				attendedCount,
 				absentCount,
 				rate
