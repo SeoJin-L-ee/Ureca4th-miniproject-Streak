@@ -1,5 +1,5 @@
 import { useState, type FormEvent } from "react";
-import { Link, Navigate, useLocation, useNavigate } from "react-router-dom";
+import { Link, Navigate, useNavigate } from "react-router-dom";
 import { Zap } from "lucide-react";
 import { useAuth } from "../context/AuthContext";
 import { ApiError } from "../api/client";
@@ -7,15 +7,13 @@ import { ApiError } from "../api/client";
 export default function Login() {
   const { user, loading, login } = useAuth();
   const navigate = useNavigate();
-  const location = useLocation();
   const [email, setEmail] = useState("leader1@test.com");
   const [password, setPassword] = useState("password123!");
   const [error, setError] = useState<string | null>(null);
   const [submitting, setSubmitting] = useState(false);
 
   if (!loading && user) {
-    const from = (location.state as { from?: string })?.from ?? "/studies";
-    return <Navigate to={from} replace />;
+    return <Navigate to="/" replace />;
   }
 
   const onSubmit = async (e: FormEvent) => {
@@ -24,7 +22,7 @@ export default function Login() {
     setSubmitting(true);
     try {
       await login(email, password);
-      navigate("/studies", { replace: true });
+      navigate("/", { replace: true });
     } catch (err) {
       if (err instanceof ApiError && err.status === 401) {
         setError("이메일 또는 비밀번호가 잘못되었습니다.");

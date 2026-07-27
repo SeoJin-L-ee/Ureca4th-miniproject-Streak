@@ -3,6 +3,7 @@ import AppLayout from "./layouts/AppLayout";
 import { AuthProvider } from "./context/AuthContext";
 import Login from "./pages/Login";
 import Signup from "./pages/Signup";
+import Home from "./pages/Home";
 import MyPage from "./pages/MyPage";
 import MyStudyList from "./pages/MyStudyList";
 import StudyDetail from "./pages/StudyDetail";
@@ -21,8 +22,8 @@ function App() {
         <Routes>
           <Route path="login" element={<Login />} />
           <Route path="signup" element={<Signup />} />
+          <Route path="/" element={<Home />} />
           <Route element={<AppLayout />}>
-            <Route index element={<Navigate to="/studies" replace />} />
             <Route path="studies" element={<MyStudyList />} />
             <Route path="studies/:studyId" element={<StudyDetail />} />
             <Route path="studies/:studyId/applications" element={<ApplicantManage />} />
