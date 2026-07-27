@@ -6,6 +6,8 @@ public record AttendanceMemberResDto(
 	Long memberId,
 	String name,
 	
+	boolean isLeader,
+	
 	// 출석 횟수 
 	int attendedCount,
 	
