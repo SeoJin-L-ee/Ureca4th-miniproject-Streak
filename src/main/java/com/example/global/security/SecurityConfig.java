@@ -75,7 +75,7 @@ public class SecurityConfig {
         		.securityContext(context -> context.securityContextRepository(securityContextRepository))
         			.sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.IF_REQUIRED)
         						.sessionFixation(fixation -> fixation.changeSessionId()))
-        			.authorizeHttpRequests(auth -> auth.requestMatchers(HttpMethod.GET, "/", "/index.html", "/app.js", "/style.css", "/favicon.ico").permitAll()
+        			.authorizeHttpRequests(auth -> auth.requestMatchers(HttpMethod.GET, "/", "/index.html", "/assets/**", "/favicon.svg", "/favicon.ico").permitAll()
         						.requestMatchers(HttpMethod.GET, "/api/auth/csrf").permitAll()
     							.requestMatchers(HttpMethod.POST, "/api/auth/signup").permitAll()
     							.requestMatchers(HttpMethod.POST, "/api/auth/login").permitAll()

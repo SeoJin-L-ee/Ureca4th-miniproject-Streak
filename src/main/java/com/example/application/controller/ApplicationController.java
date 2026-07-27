@@ -68,7 +68,7 @@ public class ApplicationController {
 	// 지원자 목록 조회 (스터디장 전용)
 	public CustomResponse<List<ApplicationResDto>> getApplications(
 			@CurrentUser MemberPrincipal principal,
-			@PathVariable Long studyId
+			@PathVariable("studyId") Long studyId
 	) {
 		List<ApplicationResDto> resDtoList = applicationQueryService.getApplications(principal.memberId(), studyId);
         return CustomResponse.onSuccess(resDtoList);

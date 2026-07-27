@@ -40,15 +40,17 @@ public interface SessionRepository extends JpaRepository<Session, Long>{
 	List<Session> findByMemberIdAndDateRange(@Param("memberId") Long memberId, @Param("start") LocalDateTime start, @Param("end") LocalDateTime end);
 	
 	// 특정 스터디의, 현재 시각 기준 가장 가깝게 예정된 회차를 조회
+	// 이후 회차가 여러 개면 결과가 둘 이상 나올 수 있으므로 Pageable로 1건만 가져온다 (Optional 반환은 Pageable과 함께 쓸 수 없어 List로 반환)
 	@Query("""
 			SELECT s FROM Session s
 			WHERE s.study.id = :studyId
 				AND s.startsAt > :now
 			ORDER BY s.startsAt ASC, s.createdAt ASC
 			""")
-	Optional<Session> findNextSessionByStudyId(
+	List<Session> findNextSessionByStudyId(
 		@Param("studyId") Long studyId,
-		@Param("now") LocalDateTime now
+		@Param("now") LocalDateTime now,
+		Pageable pageable
 	);
 	
 	// 각 스터디 아이디별로, 현재 시각 기준 가장 가깝게 예정된 회차를 조회 (studyId, startsAt 오름차순으로 한번에)
