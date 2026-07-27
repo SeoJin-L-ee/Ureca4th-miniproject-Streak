@@ -28,7 +28,10 @@ export default function Home() {
         className="pointer-events-none absolute inset-y-0 left-0 w-full bg-gradient-to-r from-brand-50 from-10% via-brand-50/70 via-40% to-transparent sm:w-4/5 lg:w-3/4"
       />
 
-      <Link to="/members/me" className="absolute right-6 top-6 z-10 flex items-center gap-2 sm:right-10 sm:top-8">
+      <Link
+        to="/members/me"
+        className="absolute right-6 top-6 z-10 flex items-center gap-2 sm:right-10 sm:top-8"
+      >
         <Avatar name={user.name} size={32} />
         <span className="text-sm font-medium text-gray-700 sm:text-base">{user.name}</span>
       </Link>
