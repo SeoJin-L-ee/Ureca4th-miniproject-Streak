@@ -163,7 +163,7 @@ export default function StudyExplore() {
               <Badge tone="brand">{categoryLabel[detail.category]}</Badge>
               <Badge tone={studyStatusTone[detail.status]}>{studyStatusLabel[detail.status]}</Badge>
             </div>
-            <p className="text-sm leading-relaxed text-gray-600">{detail.description}</p>
+            <p className="whitespace-pre-line text-sm leading-relaxed text-gray-600">{detail.description}</p>
             <div className="grid grid-cols-1 gap-2 rounded-xl bg-gray-50 p-4 text-sm sm:grid-cols-2">
               <p className="flex items-center gap-1.5 text-gray-600">스터디장 {detail.leaderName}</p>
               <p className="flex items-center gap-1.5 text-gray-600">

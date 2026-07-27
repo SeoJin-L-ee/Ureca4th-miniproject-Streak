@@ -126,7 +126,7 @@ export default function StudyDetail() {
               <Badge tone="brand">{categoryLabel[data.category]}</Badge>
             </div>
             <h2 className="mb-1 text-2xl font-bold text-gray-900">{data.title}</h2>
-            <p className="text-sm text-gray-500">{data.description}</p>
+            <p className="whitespace-pre-line text-sm text-gray-500">{data.description}</p>
             <div className="mt-2 flex flex-wrap items-center gap-3 text-xs text-gray-400">
               <span className="flex items-center gap-1">
                 <Users size={13} /> {data.currentParticipantCount}/{data.capacity}명
