@@ -12,7 +12,7 @@ export default function Signup() {
   const [fieldErrors, setFieldErrors] = useState<Record<string, string>>({});
   const [submitting, setSubmitting] = useState(false);
 
-  if (!loading && user) return <Navigate to="/studies" replace />;
+  if (!loading && user) return <Navigate to="/" replace />;
 
   const onSubmit = async (e: FormEvent) => {
     e.preventDefault();
@@ -21,7 +21,7 @@ export default function Signup() {
     setSubmitting(true);
     try {
       await signup(form.email, form.password, form.name, form.phone);
-      navigate("/studies", { replace: true });
+      navigate("/", { replace: true });
     } catch (err) {
       if (err instanceof ApiError) {
         setError(err.message);

@@ -366,6 +366,8 @@ export default function StudyDetail() {
         studyId={id}
         currentStatus={data.status}
         initial={{ title: data.title, description: data.description, capacity: data.capacity, category: data.category }}
+        participants={participantStats ?? []}
+        currentLeaderId={leaderId}
         onSaved={() => {
           setEditOpen(false);
           load();
@@ -415,6 +417,8 @@ function EditStudyModal({
   studyId,
   currentStatus,
   initial,
+  participants,
+  currentLeaderId,
   onSaved,
 }: {
   open: boolean;
@@ -422,14 +426,23 @@ function EditStudyModal({
   studyId: number;
   currentStatus: StudyStatus;
   initial: { title: string; description: string; capacity: number; category: StudyCategory };
+  participants: AttendanceMemberResDto[];
+  currentLeaderId: number | null;
   onSaved: () => void;
 }) {
   const [form, setForm] = useState(initial);
   const [saving, setSaving] = useState(false);
   const [ending, setEnding] = useState(false);
+  const [delegating, setDelegating] = useState(false);
+  const [delegateTarget, setDelegateTarget] = useState<number | "">("");
+
+  const delegateCandidates = participants.filter((p) => p.memberId !== currentLeaderId);
 
   useEffect(() => {
-    if (open) setForm(initial);
+    if (open) {
+      setForm(initial);
+      setDelegateTarget("");
+    }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [open]);
 
@@ -451,6 +464,19 @@ function EditStudyModal({
       onSaved();
     } finally {
       setEnding(false);
+    }
+  };
+
+  const delegateLeader = async () => {
+    if (delegateTarget === "") return;
+    const targetName = delegateCandidates.find((p) => p.memberId === delegateTarget)?.name ?? "";
+    if (!window.confirm(`정말 ${targetName}님에게 스터디장을 위임할까요? 위임하면 되돌릴 수 없고, 스터디 관리 권한을 잃게 돼요.`)) return;
+    setDelegating(true);
+    try {
+      await studiesApi.updateStudyLeader(studyId, delegateTarget);
+      onSaved();
+    } finally {
+      setDelegating(false);
     }
   };
 
@@ -505,15 +531,46 @@ function EditStudyModal({
         >
           {saving ? "저장 중..." : "저장"}
         </button>
-        {currentStatus !== "ENDED" && (
-          <button
-            onClick={endStudy}
-            disabled={ending}
-            className="w-full rounded-lg border border-red-200 py-2.5 text-sm font-semibold text-red-600 hover:bg-red-50 disabled:opacity-60"
-          >
-            {ending ? "종료 처리 중..." : "스터디 종료"}
-          </button>
-        )}
+
+        <div className="border-t border-gray-200 pt-3">
+          <div className="space-y-2">
+            <label className="block text-sm font-medium text-gray-700">스터디 위임</label>
+            <div className="flex gap-2">
+              <select
+                value={delegateTarget}
+                onChange={(e) => setDelegateTarget(e.target.value ? Number(e.target.value) : "")}
+                disabled={delegateCandidates.length === 0}
+                className="w-full rounded-lg border border-gray-200 px-3 py-2 text-sm focus:border-brand-400 focus:outline-none disabled:bg-gray-50 disabled:text-gray-400"
+              >
+                <option value="">
+                  {delegateCandidates.length === 0 ? "위임할 참여자가 없어요" : "위임할 참여자 선택"}
+                </option>
+                {delegateCandidates.map((p) => (
+                  <option key={p.memberId} value={p.memberId}>
+                    {p.name}
+                  </option>
+                ))}
+              </select>
+              <button
+                onClick={delegateLeader}
+                disabled={delegating || delegateTarget === ""}
+                className="shrink-0 rounded-lg border border-amber-200 px-4 py-2 text-sm font-semibold text-amber-600 hover:bg-amber-50 disabled:opacity-60"
+              >
+                {delegating ? "위임 중..." : "위임"}
+              </button>
+            </div>
+          </div>
+
+          {currentStatus !== "ENDED" && (
+            <button
+              onClick={endStudy}
+              disabled={ending}
+              className="mt-3 w-full rounded-lg border border-red-200 py-2.5 text-sm font-semibold text-red-600 hover:bg-red-50 disabled:opacity-60"
+            >
+              {ending ? "종료 처리 중..." : "스터디 종료"}
+            </button>
+          )}
+        </div>
       </div>
     </Modal>
   );

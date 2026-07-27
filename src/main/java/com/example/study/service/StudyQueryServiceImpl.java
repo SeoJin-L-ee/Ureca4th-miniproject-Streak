@@ -7,6 +7,7 @@ import java.time.LocalDateTime;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import java.util.stream.Collectors;
 
 import org.springframework.data.domain.Page;
@@ -28,7 +29,6 @@ import com.example.global.common.code.CommonErrorCode;
 import com.example.global.common.exception.GeneralException;
 import com.example.participant.entity.Participant;
 import com.example.participant.entity.enums.StudyRole;
-import com.example.participant.exception.ParticipantErrorCode;
 import com.example.participant.repository.ParticipantRepository;
 import com.example.session.dto.response.SessionDashboardDataDto;
 import com.example.session.dto.response.SessionSummaryResDto;
@@ -215,17 +215,16 @@ public class StudyQueryServiceImpl implements StudyQueryService {
 		Study study = studyRepository.findByIdAndIsDeletedFalse(studyId)
 				.orElseThrow(() -> new GeneralException(StudyErrorCode.STUDY_NOT_FOUND));
 		
-		Participant leaderParticipant = participantRepository.findLeaderByStudyId(studyId, StudyRole.LEADER)
-				.orElseThrow(() -> new GeneralException(ParticipantErrorCode.PARTICIPANT_NOT_FOUND));
-		Member leader = leaderParticipant.getMember();
-		
+		// 스터디장 참여자 레코드가 없는(시드 데이터 누락 등) 경우에도 목록 조회와 동일하게 "알 수 없음"으로 대체
+		Optional<Participant> leaderParticipant = participantRepository.findLeaderByStudyId(studyId, StudyRole.LEADER);
+		Member leader = leaderParticipant.map(Participant::getMember).orElse(null);
+
 		// 현재 참여자 수 계산
 		int currentParticipantCnt = (int) participantRepository.countByStudyId(studyId);
 
 		StudyApplySummaryResDto.MyStudyStatus myStatus = StudyApplySummaryResDto.MyStudyStatus.NONE;
-        boolean isLeader = false;
         // 스터디장 여부 확인
-    	isLeader = leader.getId().equals(memberId);
+        boolean isLeader = leader != null && leader.getId().equals(memberId);
         if (isLeader) {
         	// 스터디장이면 굳이 조회 없이 ACCEPTED 처리
             myStatus = StudyApplySummaryResDto.MyStudyStatus.ACCEPTED;
@@ -238,8 +237,8 @@ public class StudyQueryServiceImpl implements StudyQueryService {
         return new StudyApplyDetailResDto(
                 study.getId(),
                 study.getTitle(),
-                leader.getId(),
-                leader.getName(),
+                leader != null ? leader.getId() : null,
+                leader != null ? leader.getName() : "알 수 없음",
                 study.getDescription(),
                 study.getCategory(),
                 study.getStatus(),

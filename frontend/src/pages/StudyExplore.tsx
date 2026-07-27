@@ -30,6 +30,7 @@ export default function StudyExplore() {
   const [message, setMessage] = useState("");
   const [applying, setApplying] = useState(false);
   const [applyError, setApplyError] = useState<string | null>(null);
+  const [detailError, setDetailError] = useState<string | null>(null);
 
   useEffect(() => {
     const timer = setTimeout(() => {
@@ -45,12 +46,15 @@ export default function StudyExplore() {
 
   useEffect(() => {
     if (selectedId == null) return;
+    setDetail(null);
     setDetailLoading(true);
     setMessage("");
     setApplyError(null);
+    setDetailError(null);
     studiesApi
       .getStudyDetailForApply(selectedId)
       .then(setDetail)
+      .catch(() => setDetailError("스터디 정보를 불러오지 못했어요."))
       .finally(() => setDetailLoading(false));
   }, [selectedId]);
 
@@ -149,7 +153,9 @@ export default function StudyExplore() {
       </main>
 
       <Modal open={selectedId != null} onClose={() => setSelectedId(null)} title={detail?.title}>
-        {detailLoading || !detail ? (
+        {detailError ? (
+          <p className="py-8 text-center text-sm text-red-500">{detailError}</p>
+        ) : detailLoading || !detail ? (
           <p className="py-8 text-center text-sm text-gray-400">불러오는 중...</p>
         ) : (
           <div className="space-y-4">
