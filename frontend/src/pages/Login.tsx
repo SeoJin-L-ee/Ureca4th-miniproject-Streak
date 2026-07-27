@@ -26,7 +26,11 @@ export default function Login() {
       await login(email, password);
       navigate("/studies", { replace: true });
     } catch (err) {
-      setError(err instanceof ApiError ? err.message : "로그인에 실패했습니다.");
+      if (err instanceof ApiError && err.status === 401) {
+        setError("이메일 또는 비밀번호가 잘못되었습니다.");
+      } else {
+        setError(err instanceof ApiError ? err.message : "로그인에 실패했습니다.");
+      }
     } finally {
       setSubmitting(false);
     }

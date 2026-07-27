@@ -22,7 +22,9 @@ export default function AppLayout() {
     <div className="flex min-h-screen bg-[#f7f7fb]">
       <Sidebar />
       <div className="flex min-h-screen flex-1 flex-col overflow-x-hidden">
-        <Outlet />
+        <div className="mx-auto w-full max-w-6xl">
+          <Outlet />
+        </div>
       </div>
     </div>
   );

@@ -49,8 +49,9 @@ public class AttendanceServiceImpl implements AttendanceService {
 	private final SessionRepository sessionRepository;
 	private final StudyRepository studyRepository;
 
-	// 스터디 내 참여자별 출석 현황 조회 
+	// 스터디 내 참여자별 출석 현황 조회
 	@Override
+	@Transactional(readOnly=true)
 	public AttendanceListResDto getMemberAttendances(long studyId, long memberId) {
 		
 		// 해당 Study 에 참여한 Member만 스터디 회차를 조회할 수 있도록 검증
@@ -58,35 +59,35 @@ public class AttendanceServiceImpl implements AttendanceService {
 			throw new GeneralException(CommonErrorCode.FORBIDDEN);
 		}
 		
-		// 스터디 참여자 목록 조회 
+		// 스터디 참여자 목록 조회
 		List<Participant> participants = participantRepository.findAllByStudyId(studyId);
-		
-		// 각 참여자별 출석 데이터 집계 및 DTO 변환 
+
+		// 각 참여자별 출석 데이터 집계 및 DTO 변환
 		List<AttendanceMemberResDto> memberResDtos = participants.stream()
 						.map(participant -> {
 							long mId = participant.getMember().getId();
-							
+
 							int attendedCount = attendanceRepository.countBySessionStudyIdAndMemberIdAndStatus(studyId, mId, AttendanceStatus.PRESENT);
 							int absentCount = attendanceRepository.countBySessionStudyIdAndMemberIdAndStatus(studyId, mId, AttendanceStatus.ABSENT);
 							int total = attendedCount + absentCount;
-							
+
 							double rate = (total == 0) ? 0.0 : Math.round(((double) attendedCount / total * 100) * 10) / 10.0;
-							
+
 							return AttendanceConverter.toAttendanceMemberResDto(participant, attendedCount, absentCount, rate);
 						})
 						.toList();
-		
-		
-		// 스터디 전체 평균 출석률 계산 
+
+
+		// 스터디 전체 평균 출석률 계산
 		double totalAvgRate = memberResDtos.stream()
 						.mapToDouble(AttendanceMemberResDto::attendanceRate)
 						.average()
 						.orElse(0.0);
-		
-		double roundedAvg = Math.round(totalAvgRate * 10) / 10.0; 
-		
+
+		double roundedAvg = Math.round(totalAvgRate * 10) / 10.0;
+
 		int totalSessionCount = sessionRepository.countByStudyId(studyId);
-		
+
 		return AttendanceConverter.toAttendanceListResDto(studyId, totalSessionCount, roundedAvg, memberResDtos);
 	}
 
@@ -97,12 +98,12 @@ public class AttendanceServiceImpl implements AttendanceService {
 		
 		if (!studyRepository.existsById(studyId)) throw new GeneralException(StudyErrorCode.STUDY_NOT_FOUND);
 		if(!sessionRepository.existsByIdAndStudyId(sessionId, studyId)) throw new GeneralException(SessionErrorCode.NOT_STUDY_SESSION);
-		
+
 		// LEADER 로 등록된 Member 만 스터디 회차를 생성할 수 있도록 검증 
-		if(!participantRepository.existsByStudyIdAndMemberIdAndRole(studyId, memberId, StudyRole.LEADER)) {
+	    if(!participantRepository.existsByStudyIdAndMemberIdAndRole(studyId, memberId, StudyRole.LEADER)) {
 			throw new GeneralException(CommonErrorCode.FORBIDDEN);
 		}
-		
+
 		List<Member> members = participantRepository.findMembersByStudyId(studyId);
 		
 		Map<Long, AttendanceStatus> attendanceMap = attendanceRepository.findAllBySessionId(sessionId)

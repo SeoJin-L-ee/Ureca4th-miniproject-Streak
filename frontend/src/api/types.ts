@@ -232,6 +232,21 @@ export interface AttendanceSessionResDto {
   participants: AttendanceParticipantResDto[];
 }
 
+export interface AttendanceMemberResDto {
+  memberId: number;
+  name: string;
+  attendedCount: number;
+  absentCount: number;
+  attendanceRate: number;
+}
+
+export interface AttendanceListResDto {
+  studyId: number;
+  totalSessionCount: number;
+  averageAttendanceRate: number;
+  members: AttendanceMemberResDto[];
+}
+
 // ---- application ----
 export interface ApplicationResDto {
   applicationId: number;

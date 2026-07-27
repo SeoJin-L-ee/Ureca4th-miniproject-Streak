@@ -54,6 +54,8 @@ export default function RoundList() {
   }
 
   const isLeader = data.isLeader;
+  const totalSessionCount = data.sessions.sessionList.length;
+  const completedSessionCount = data.sessions.sessionList.filter((r) => new Date(r.startsAt) < new Date()).length;
 
   const submit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -109,6 +111,10 @@ export default function RoundList() {
         title="회차 목록"
       />
       <main className="flex-1 space-y-4 p-6">
+        <p className="text-sm text-gray-500">
+          전체 {totalSessionCount}회차 중 <span className="font-semibold text-brand-600">{completedSessionCount}회차</span> 진행
+          완료했어요.
+        </p>
         {isLeader && (
           <Card>
             {!showForm ? (

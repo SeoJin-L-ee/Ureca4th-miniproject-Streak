@@ -1,10 +1,11 @@
 import { useEffect, useState } from "react";
 import { Link, Navigate, useNavigate, useParams } from "react-router-dom";
-import { CalendarClock, CheckCircle2, Link as LinkIcon, Pencil, Trash2, XCircle } from "lucide-react";
+import { CalendarClock, CheckCircle2, Link as LinkIcon, Lock, Pencil, Trash2, XCircle } from "lucide-react";
 import Topbar from "../components/Topbar";
 import Card from "../components/Card";
 import Badge from "../components/Badge";
 import Avatar from "../components/Avatar";
+import Modal from "../components/Modal";
 import * as assignmentsApi from "../api/assignments";
 import * as submissionsApi from "../api/submissions";
 import * as studiesApi from "../api/studies";
@@ -36,6 +37,7 @@ export default function AssignmentDetail() {
   const [editingAssignment, setEditingAssignment] = useState(false);
   const [assignmentForm, setAssignmentForm] = useState({ title: "", description: "", dueAt: "" });
   const [assignmentSaving, setAssignmentSaving] = useState(false);
+  const [viewingSubmission, setViewingSubmission] = useState<SubmissionInfoResDto | null>(null);
 
   const load = () => {
     setLoading(true);
@@ -69,6 +71,7 @@ export default function AssignmentDetail() {
   }
 
   const d = daysUntil(assignment.dueAt);
+  const overdue = d < 0;
   const mySubmission = submissions.find((s) => s.memberId === user?.memberId);
 
   const submit = async () => {
@@ -206,20 +209,40 @@ export default function AssignmentDetail() {
                 <p className="flex items-center gap-1.5 text-sm font-medium text-emerald-700">
                   <CheckCircle2 size={16} /> 제출 완료
                 </p>
-                <button
-                  onClick={() => {
-                    setDraft(mySubmission.content ?? "");
-                    setEditing(true);
-                  }}
-                  className="flex items-center gap-1 text-xs font-medium text-emerald-700 hover:underline"
-                >
-                  <Pencil size={12} /> 수정
-                </button>
+                {!overdue && (
+                  <button
+                    onClick={() => {
+                      setDraft(mySubmission.content ?? "");
+                      setEditing(true);
+                    }}
+                    className="flex items-center gap-1 text-xs font-medium text-emerald-700 hover:underline"
+                  >
+                    <Pencil size={12} /> 수정
+                  </button>
+                )}
               </div>
               <p className="flex items-center gap-1 text-sm text-emerald-700">
                 <LinkIcon size={13} /> {mySubmission.content}
               </p>
               <p className="mt-1 text-xs text-emerald-500">{mySubmission.updatedAt && formatDateTime(mySubmission.updatedAt)} 제출됨</p>
+            </div>
+          ) : overdue ? (
+            <div className="space-y-3">
+              <p className="flex items-center gap-1.5 text-sm font-medium text-red-500">
+                <Lock size={14} /> 제출 기한이 지나 더 이상 제출할 수 없습니다.
+              </p>
+              <textarea
+                rows={3}
+                disabled
+                placeholder="제출 링크 또는 내용을 입력하세요 (예: GitHub 링크)"
+                className="w-full cursor-not-allowed rounded-lg border border-gray-200 bg-gray-50 px-3 py-2 text-sm text-gray-400"
+              />
+              <button
+                disabled
+                className="flex cursor-not-allowed items-center gap-1.5 rounded-lg bg-gray-100 px-4 py-2 text-sm font-medium text-gray-400"
+              >
+                <Lock size={14} /> 제출 마감됨
+              </button>
             </div>
           ) : (
             <div className="space-y-3">
@@ -258,26 +281,44 @@ export default function AssignmentDetail() {
                 <li key={s.memberId} className="flex items-center justify-between py-2.5">
                   <div className="flex items-center gap-3">
                     <Avatar name={s.memberName} size={32} />
-                    <div>
-                      <p className="text-sm font-medium text-gray-800">{s.memberName}</p>
-                      {s.isSubmitted && s.content && <p className="max-w-xs truncate text-xs text-gray-400">{s.content}</p>}
-                    </div>
+                    <p className="text-sm font-medium text-gray-800">{s.memberName}</p>
                   </div>
-                  {s.isSubmitted ? (
-                    <span className="flex items-center gap-1 text-xs font-medium text-emerald-600">
-                      <CheckCircle2 size={14} /> 제출완료
-                    </span>
-                  ) : (
-                    <span className="flex items-center gap-1 text-xs font-medium text-gray-400">
-                      <XCircle size={14} /> 미제출
-                    </span>
-                  )}
+                  <div className="flex items-center gap-2">
+                    {s.isSubmitted ? (
+                      <>
+                        <span className="flex items-center gap-1 text-xs font-medium text-emerald-600">
+                          <CheckCircle2 size={14} /> 제출완료
+                        </span>
+                        <button
+                          onClick={() => setViewingSubmission(s)}
+                          className="rounded-lg border border-gray-200 px-2.5 py-1 text-xs font-medium text-gray-600 hover:bg-gray-50"
+                        >
+                          제출 내용 보기
+                        </button>
+                      </>
+                    ) : (
+                      <span className="flex items-center gap-1 text-xs font-medium text-gray-400">
+                        <XCircle size={14} /> 미제출
+                      </span>
+                    )}
+                  </div>
                 </li>
               ))}
             </ul>
           </Card>
         )}
       </main>
+
+      <Modal open={viewingSubmission != null} onClose={() => setViewingSubmission(null)} title={`${viewingSubmission?.memberName ?? ""}의 제출 내용`}>
+        <div className="space-y-2">
+          <p className="flex items-center gap-1.5 whitespace-pre-wrap break-all rounded-lg border border-gray-100 bg-gray-50 p-3 text-sm text-gray-700">
+            <LinkIcon size={13} className="shrink-0" /> {viewingSubmission?.content}
+          </p>
+          {viewingSubmission?.updatedAt && (
+            <p className="text-xs text-gray-400">{formatDateTime(viewingSubmission.updatedAt)} 제출됨</p>
+          )}
+        </div>
+      </Modal>
     </>
   );
 }
