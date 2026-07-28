@@ -72,7 +72,7 @@
 
 ## 디렉토리 구조
 
-백엔드는 도메인 단위 패키지 구조를 따릅니다.
+백엔드는 도메인 단위 패키지 구조를 따릅니다. <br>
 각 도메인 패키지는 `controller / service / repository / entity / dto / converter` 로 구성됩니다.
 
 ```
@@ -97,6 +97,8 @@ src/main/resources
 ├── data.sql          # 테스트용 더미 데이터 (서버 재시작 시마다 다시 로드됨)
 └── static/           # 프론트엔드 빌드 산출물(frontend/npm run build 결과가 여기로 들어감)
 ```
+
+<br>
 
 프론트엔드는 `frontend/` 폴더에 독립된 Vite 프로젝트로 존재합니다.
 
@@ -124,28 +126,28 @@ frontend/src
 <br>
 
 **1. 회원가입 → 로그인**
-`POST /api/auth/signup`으로 가입 후, `GET /api/auth/csrf`로 토큰을 받아 `POST /api/auth/login`으로 로그인합니다. <br>
-로그인 성공 시 서버가 `HttpSession`에 인증 정보를 저장하고, 이후 요청은 세션 쿠키로 인증됩니다.
+- `POST /api/auth/signup`으로 가입 후, `GET /api/auth/csrf`로 토큰을 받아 `POST /api/auth/login`으로 로그인합니다.
+- 로그인 성공 시 서버가 `HttpSession`에 인증 정보를 저장하고, 이후 요청은 세션 쿠키로 인증됩니다.
 
 **2. 스터디 개설 → 운영**
-리더가 `POST /api/studies`로 스터디를 개설하면 `RECRUITING` 상태로 시작합니다. <br>
-`PATCH /api/studies/{studyId}/status`로 모집 상태를 전환하고, 필요 시 `PATCH /api/studies/{studyId}/leader`로 리더를 위임합니다.
+- 리더가 `POST /api/studies`로 스터디를 개설하면 `RECRUITING` 상태로 시작합니다.
+- `PATCH /api/studies/{studyId}/status`로 모집 상태를 전환하고, 필요 시 `PATCH /api/studies/{studyId}/leader`로 리더를 위임합니다.
 
 **3. 탐색 → 가입 신청 → 승인**
-`GET /api/studies?category=&title=`로 모집 중인 스터디를 검색하고, `GET /api/studies/{studyId}`로 상세를 확인한 뒤 `POST /api/studies/{studyId}/applications`로 가입을 신청합니다. <br>
-리더는 `GET /api/studies/{studyId}/applications`로 신청자 목록을 확인하고 `PATCH /api/applications/{applicationId}/status`로 승인/거절합니다. <br>
-신청자는 본인 신청을 `DELETE /api/applications/{applicationId}`로 취소할 수 있습니다.
+- `GET /api/studies?category=&title=`로 모집 중인 스터디를 검색하고, `GET /api/studies/{studyId}`로 상세를 확인한 뒤 `POST /api/studies/{studyId}/applications`로 가입을 신청합니다.
+- 리더는 `GET /api/studies/{studyId}/applications`로 신청자 목록을 확인하고 `PATCH /api/applications/{applicationId}/status`로 승인/거절합니다.
+- 신청자는 본인 신청을 `DELETE /api/applications/{applicationId}`로 취소할 수 있습니다.
 
 **4. 세션 → 과제/제출/출석**
-스터디 아래에 `POST /api/studies/{studyId}/sessions`로 회차(세션)를 만들고, 각 세션에 `POST .../assignments`로 과제를 등록합니다. <br>
-참여자는 `POST .../submissions`로 과제를 제출합니다. 세션이 끝나면 `PATCH .../attendances`로 참여자 출석 상태(`PRESENT`/`ABSENT`/`UNMARKED`)를 일괄 갱신합니다.
+- 스터디 아래에 `POST /api/studies/{studyId}/sessions`로 회차(세션)를 만들고, 각 세션에 `POST .../assignments`로 과제를 등록합니다.
+- 참여자는 `POST .../submissions`로 과제를 제출합니다. 세션이 끝나면 `PATCH .../attendances`로 참여자 출석 상태(`PRESENT`/`ABSENT`/`UNMARKED`)를 일괄 갱신합니다.
 
 **5. 마이페이지 집계**
-`mypage` 도메인은 회원 기준으로 참여 스터디, 출석률, 출석 스트릭, 마감 임박 과제, 오늘 일정 등을 집계해서 보여줍니다. <br>
-대시보드(`GET /api/members/me/dashboard`)가 이 정보들을 한 번에 모아 반환합니다.
+- `mypage` 도메인은 회원 기준으로 참여 스터디, 출석률, 출석 스트릭, 마감 임박 과제, 오늘 일정 등을 집계해서 보여줍니다.
+- 대시보드(`GET /api/members/me/dashboard`)가 이 정보들을 한 번에 모아 반환합니다.
 
 **6. 프론트엔드 연동**
-프론트엔드는 위 API 전체를 실제로 호출하도록 연동되어 있으며, 세션 쿠키 + CSRF 헤더 기반 인증을 `frontend/src/api/client`와 `AuthContext`에서 처리합니다.
+- 프론트엔드는 위 API 전체를 실제로 호출하도록 연동되어 있으며, 세션 쿠키 + CSRF 헤더 기반 인증을 `frontend/src/api/client`와 `AuthContext`에서 처리합니다.
 
 <br>
 <br>
@@ -165,7 +167,7 @@ GRANT ALL PRIVILEGES ON streak.* TO 'ureca'@'%';
 FLUSH PRIVILEGES;
 ```
 
-접속 정보는 [application.properties](src/main/resources/application.properties)에 이미 설정되어 있습니다 (`jdbc:mysql://localhost:3306/streak`, `ureca`/`ureca`).
+접속 정보는 [application.properties](src/main/resources/application.properties)에 이미 설정되어 있습니다. (`jdbc:mysql://localhost:3306/streak`, `ureca`/`ureca`) <br>
 (로컬 구동이기 때문에 환경변수 및 민감정보 관련해서는 미처리)
 
 <br>
@@ -179,7 +181,7 @@ FLUSH PRIVILEGES;
 1. [schema.sql](src/main/resources/schema.sql)이 실행되어 테이블을 초기화
 2. [data.sql](src/main/resources/data.sql)이 실행되어 테스트용 더미 데이터가 채워짐
 
-즉 **재시작할 때마다 DB가 초기화되고 더미 데이터로 다시 채워지므로**, 테스트 중 직접 추가/수정한 데이터는 재시작 시 사라집니다. 
+즉 재시작할 때마다 DB가 초기화되고 더미 데이터로 다시 채워지므로, 테스트 중 직접 추가/수정한 데이터는 재시작 시 사라집니다. <br>
 (`http://localhost:8080`)
 
 <br>
@@ -187,7 +189,8 @@ FLUSH PRIVILEGES;
 
 ## 테스트 계정
 
-`data.sql`에 미리 채워진 계정입니다. **실제로 로그인 가능한 계정은 아래 2개뿐**이며, 그 외 `member3@test.com` ~ `member20@test.com`은 비밀번호 해시가 더미값(`$2a$10$dummyhash`)으로 들어있어 로그인할 수 없습니다 (데이터 조회/연관관계 테스트용으로만 사용).
+`data.sql`에 미리 채워진 계정입니다. <br>
+실제로 로그인 가능한 계정은 아래 2개뿐이며, 그 외 `member3@test.com` ~ `member20@test.com`은 비밀번호 해시가 더미값(`$2a$10$dummyhash`)으로 들어있어 로그인할 수 없습니다.
 
 | 이메일 | 비밀번호 | 비고 |
 | --- | --- | --- |
