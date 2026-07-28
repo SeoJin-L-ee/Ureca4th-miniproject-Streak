@@ -62,7 +62,7 @@
 - Spring Security (세션 + CSRF 기반 인증)
 - Gradle
 
-**프론트엔드** (`frontend/`)
+**프론트엔드** (Claude를 사용한 바이브코딩으로 구현)
 - React 19 + TypeScript, Vite
 - react-router-dom, recharts, lucide-react
 - Tailwind CSS v4
