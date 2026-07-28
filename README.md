@@ -1,4 +1,8 @@
-# Streak
+# Streak - 스터디 통합 관리 서비스
+
+### LG 유플러스 Ureca 4th 백엔드 과정 / 미니 프로젝트2
+
+<br>
 
 <img width="1533" height="750" alt="image" src="https://github.com/user-attachments/assets/4d8caa66-639c-4ee1-8cbe-3fbc4e13cef0" />
 
@@ -6,7 +10,8 @@
 <br>
 <br>
 
-스터디 그룹의 개설부터 가입 신청/승인, 세션(회차) 진행, 출석·과제·과제 제출 관리, 마이페이지 대시보드까지 지원하는 스터디 관리 서비스입니다. 백엔드(Spring Boot)와 프론트엔드(React, `frontend/` 서브폴더)가 하나의 저장소에서 함께 관리됩니다.
+스터디 그룹의 개설부터 가입 신청/승인, 세션 진행, 출석/과제/과제제출 관리, 마이페이지 대시보드까지 지원하는 스터디 관리 서비스입니다. <br>
+백엔드(Spring Boot)와 프론트엔드(React, `frontend/` 폴더)가 하나의 저장소에서 함께 관리됩니다.
 
 <!-- 이 문서는 계속 업데이트되는 문서입니다. 기능이 추가/변경될 때마다 아래 섹션들을 갱신해 주세요. -->
 
@@ -119,22 +124,24 @@ frontend/src
 <br>
 
 **1. 회원가입 → 로그인**
-`POST /api/auth/signup`으로 가입 후, `GET /api/auth/csrf`로 토큰을 받아 `POST /api/auth/login`으로 로그인합니다.
+`POST /api/auth/signup`으로 가입 후, `GET /api/auth/csrf`로 토큰을 받아 `POST /api/auth/login`으로 로그인합니다. <br>
 로그인 성공 시 서버가 `HttpSession`에 인증 정보를 저장하고, 이후 요청은 세션 쿠키로 인증됩니다.
 
 **2. 스터디 개설 → 운영**
-리더가 `POST /api/studies`로 스터디를 개설하면 `RECRUITING` 상태로 시작합니다.
+리더가 `POST /api/studies`로 스터디를 개설하면 `RECRUITING` 상태로 시작합니다. <br>
 `PATCH /api/studies/{studyId}/status`로 모집 상태를 전환하고, 필요 시 `PATCH /api/studies/{studyId}/leader`로 리더를 위임합니다.
 
 **3. 탐색 → 가입 신청 → 승인**
-`GET /api/studies?category=&title=`로 모집 중인 스터디를 검색하고, `GET /api/studies/{studyId}`로 상세를 확인한 뒤 `POST /api/studies/{studyId}/applications`로 가입을 신청합니다. 리더는 `GET /api/studies/{studyId}/applications`로 신청자 목록을 확인하고 `PATCH /api/applications/{applicationId}/status`로 승인/거절합니다. 신청자는 본인 신청을 `DELETE /api/applications/{applicationId}`로 취소할 수 있습니다.
+`GET /api/studies?category=&title=`로 모집 중인 스터디를 검색하고, `GET /api/studies/{studyId}`로 상세를 확인한 뒤 `POST /api/studies/{studyId}/applications`로 가입을 신청합니다. <br>
+리더는 `GET /api/studies/{studyId}/applications`로 신청자 목록을 확인하고 `PATCH /api/applications/{applicationId}/status`로 승인/거절합니다. <br>
+신청자는 본인 신청을 `DELETE /api/applications/{applicationId}`로 취소할 수 있습니다.
 
 **4. 세션 → 과제/제출/출석**
-스터디 아래에 `POST /api/studies/{studyId}/sessions`로 회차(세션)를 만들고, 각 세션에 `POST .../assignments`로 과제를 등록합니다.
+스터디 아래에 `POST /api/studies/{studyId}/sessions`로 회차(세션)를 만들고, 각 세션에 `POST .../assignments`로 과제를 등록합니다. <br>
 참여자는 `POST .../submissions`로 과제를 제출합니다. 세션이 끝나면 `PATCH .../attendances`로 참여자 출석 상태(`PRESENT`/`ABSENT`/`UNMARKED`)를 일괄 갱신합니다.
 
 **5. 마이페이지 집계**
-`mypage` 도메인은 회원 기준으로 참여 스터디, 출석률, 출석 스트릭, 마감 임박 과제, 오늘 일정 등을 집계해서 보여줍니다.
+`mypage` 도메인은 회원 기준으로 참여 스터디, 출석률, 출석 스트릭, 마감 임박 과제, 오늘 일정 등을 집계해서 보여줍니다. <br>
 대시보드(`GET /api/members/me/dashboard`)가 이 정보들을 한 번에 모아 반환합니다.
 
 **6. 프론트엔드 연동**
